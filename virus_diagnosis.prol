@@ -1,0 +1,57 @@
+% Define symptoms and their severities.
+symptom(fever, mild).
+symptom(dry_cough, mild).
+symptom(tiredness, mild).
+symptom(aches_and_pains, moderate).
+symptom(sore_throat, moderate).
+symptom(diarrhea, moderate).
+symptom(conjunctivitis, moderate).
+symptom(headache, moderate).
+symptom(anosmia, moderate).
+symptom(running_nose, moderate).
+symptom(difficulty_breathing, severe).
+symptom(chest_pain, severe).
+symptom(loss_of_speech, severe).
+
+% Define risk factors.
+risk_factor(elderly, 70).
+risk_factor(hypertension, yes).
+risk_factor(diabetes, yes).
+risk_factor(cardiovascular_disease, yes).
+risk_factor(chronic_respiratory_disease, yes).
+risk_factor(cancer, yes).
+risk_factor(male_gender, yes).
+
+% Define incubation period range.
+incubation_period_range(1, 14).
+
+% Rule to check if symptoms indicate a possible virus infection.
+possible_virus_infection(Patient) :-
+    has_symptoms(Patient, SymptomSeverity),
+    is_high_risk(Patient, RiskFactors),
+    (
+        (SymptomSeverity = severe, member(yes, RiskFactors)) ;
+        (SymptomSeverity = moderate, \+ member(no, RiskFactors))
+    ).
+
+% Helper predicate to check if a patient has symptoms and their severity.
+has_symptoms(Patient, SymptomSeverity) :-
+    patient_has_symptom(Patient, Symptom),
+    symptom(Symptom, SymptomSeverity).
+
+% Helper predicate to check if a patient is at high risk based on risk factors.
+is_high_risk(Patient, RiskFactors) :-
+    findall(RiskFactorStatus, (
+        patient_has_risk_factor(Patient, RiskFactor),
+        (risk_factor(RiskFactor, yes) -> RiskFactorStatus = yes ; RiskFactorStatus = no)
+    ), RiskFactors).
+
+% Define example patient data (you can replace this with user input or database queries).
+patient_has_symptom(patient1, fever).
+patient_has_symptom(patient1, dry_cough).
+patient_has_symptom(patient2, tiredness).
+patient_has_symptom(patient2, loss_of_speech).
+patient_has_symptom(patient3, headache).
+patient_has_symptom(patient3, anosmia).
+patient_has_risk_factor(patient1, hypertension).
+patient_has_risk_factor(patient2, diabetes).
