@@ -1,0 +1,63 @@
+% Define facts about symptoms and risk factors
+symptom(fever).
+symptom(dry_cough).
+symptom(tiredness).
+symptom(aches_and_pains).
+symptom(sore_throat).
+symptom(diarrhea).
+symptom(conjunctivitis).
+symptom(headache).
+symptom(anosmia).
+symptom(shortness_of_breath).
+symptom(chest_pain).
+symptom(loss_of_speech_or_movement).
+
+risk_factor(age_above_70).
+risk_factor(hypertension).
+risk_factor(diabetes).
+risk_factor(cardiovascular_disease).
+risk_factor(chronic_respiratory_disease).
+risk_factor(cancer).
+risk_factor(male).
+
+% Define rules for diagnosis
+diagnose_virus_infection(PatientID) :-
+    has_symptoms(PatientID),
+    (has_risk_factors(PatientID) ; not(has_risk_factors(PatientID))),
+    write('The patient may have the virus infection. Please seek medical advice.').
+    
+diagnose_virus_infection(PatientID) :-
+    not(has_symptoms(PatientID)),
+    write('The patient is less likely to have the virus infection.').
+    
+has_symptoms(PatientID) :-
+    write('Does the patient have any of the following symptoms? (yes/no)\n'),
+    check_symptoms(PatientID).
+
+check_symptoms(PatientID) :-
+    symptom(S),
+    write(S),
+    write('? '),
+    read(Answer),
+    (Answer == yes ; (Answer == no, check_more_symptoms(PatientID))).
+
+check_more_symptoms(PatientID) :-
+    write('Are there any additional symptoms? (yes/no)\n'),
+    read(Answer),
+    (Answer == yes, check_symptoms(PatientID) ; Answer == no).
+
+has_risk_factors(PatientID) :-
+    write('Does the patient have any of the following risk factors? (yes/no)\n'),
+    check_risk_factors(PatientID).
+
+check_risk_factors(PatientID) :-
+    risk_factor(RF),
+    write(RF),
+    write('? '),
+    read(Answer),
+    (Answer == yes ; (Answer == no, check_more_risk_factors(PatientID))).
+
+check_more_risk_factors(PatientID) :-
+    write('Are there any additional risk factors? (yes/no)\n'),
+    read(Answer),
+    (Answer == yes, check_risk_factors(PatientID) ; Answer == no).
