@@ -1,0 +1,57 @@
+% Define facts about symptoms and risk factors
+symptom(fever).
+symptom(dry_cough).
+symptom(tiredness).
+symptom(aches_and_pains).
+symptom(sore_throat).
+symptom(diarrhea).
+symptom(conjunctivitis).
+symptom(headache).
+symptom(anosmia).
+symptom(shortness_of_breath).
+symptom(chest_pain).
+symptom(loss_of_speech_or_movement).
+
+risk_factor(age_above_70).
+risk_factor(hypertension).
+risk_factor(diabetes).
+risk_factor(cardiovascular_disease).
+risk_factor(chronic_respiratory_disease).
+risk_factor(cancer).
+risk_factor(male).
+risk_factor(contact_with_infected).
+
+% Define rules for diagnosis
+diagnose_virus_infection(Patient) :-
+    has_symptoms(Patient),
+    has_risk_factors(Patient),
+    has_contact_history(Patient),
+    write('The patient is at high risk of having the virus infection. Please seek immediate medical attention.').
+
+diagnose_virus_infection(Patient) :-
+    has_symptoms(Patient),
+    has_risk_factors(Patient),
+    not(has_contact_history(Patient)),
+    write('The patient may have the virus infection. Please seek medical advice.').
+    
+diagnose_virus_infection(Patient) :-
+    has_symptoms(Patient),
+    not(has_risk_factors(Patient)),
+    has_contact_history(Patient),
+    write('The patient may have the virus infection. Please seek medical advice.').
+
+diagnose_virus_infection(Patient) :-
+    not(has_symptoms(Patient)),
+    write('The patient is less likely to have the virus infection.').
+
+% Additional rules for diagnosis
+has_contact_history(Patient) :-
+    write('Has the patient had close contact with a confirmed virus case in the last 14 days? (yes/no)\n'),
+    read(Answer),
+    Answer == yes.
+
+% Additional bio data and history of events can be added here.
+% For example, you can ask questions about recent travel history or exposure to virus hotspots.
+
+% Example usage:
+% diagnose_virus_infection(john).
