@@ -21,43 +21,46 @@ risk_factor(cancer).
 risk_factor(male).
 
 % Define rules for diagnosis
-diagnose_virus_infection(PatientID) :-
-    has_symptoms(PatientID),
-    (has_risk_factors(PatientID) ; not(has_risk_factors(PatientID))),
+diagnose_virus_infection(Patient) :-
+    has_symptoms(Patient),
+    (has_risk_factors(Patient) ; not(has_risk_factors(Patient))),
     write('The patient may have the virus infection. Please seek medical advice.').
     
-diagnose_virus_infection(PatientID) :-
-    not(has_symptoms(PatientID)),
+diagnose_virus_infection(Patient) :-
+    not(has_symptoms(Patient)),
     write('The patient is less likely to have the virus infection.').
     
-has_symptoms(PatientID) :-
+has_symptoms(Patient) :-
     write('Does the patient have any of the following symptoms? (yes/no)\n'),
-    check_symptoms(PatientID).
+    check_symptoms(Patient).
 
-check_symptoms(PatientID) :-
+check_symptoms(Patient) :-
     symptom(S),
     write(S),
     write('? '),
     read(Answer),
-    (Answer == yes ; (Answer == no, check_more_symptoms(PatientID))).
+    (Answer == yes ; (Answer == no, check_more_symptoms(Patient))).
 
-check_more_symptoms(PatientID) :-
+check_more_symptoms(Patient) :-
     write('Are there any additional symptoms? (yes/no)\n'),
     read(Answer),
-    (Answer == yes, check_symptoms(PatientID) ; Answer == no).
+    (Answer == yes, check_symptoms(Patient) ; Answer == no).
 
-has_risk_factors(PatientID) :-
+has_risk_factors(Patient) :-
     write('Does the patient have any of the following risk factors? (yes/no)\n'),
-    check_risk_factors(PatientID).
+    check_risk_factors(Patient).
 
-check_risk_factors(PatientID) :-
+check_risk_factors(Patient) :-
     risk_factor(RF),
     write(RF),
     write('? '),
     read(Answer),
-    (Answer == yes ; (Answer == no, check_more_risk_factors(PatientID))).
+    (Answer == yes ; (Answer == no, check_more_risk_factors(Patient))).
 
-check_more_risk_factors(PatientID) :-
+check_more_risk_factors(Patient) :-
     write('Are there any additional risk factors? (yes/no)\n'),
     read(Answer),
-    (Answer == yes, check_risk_factors(PatientID) ; Answer == no).
+    (Answer == yes, check_risk_factors(Patient) ; Answer == no).
+
+% Example usage:
+% diagnose_virus_infection(john).
