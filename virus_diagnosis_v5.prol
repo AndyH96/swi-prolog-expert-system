@@ -1,3 +1,5 @@
+% Establishing Knowledge Base
+
 % Define facts about symptoms and risk factors
 symptom(fever, mild).
 symptom(dry_cough, mild).
@@ -22,9 +24,11 @@ risk_factor(male).
 risk_factor(contact_with_infected).
 
 % Define facts about transmission mechanisms and probabilities
-transmission_mechanism(close_proximity, 0.2).
+transmission_mechanism(close_proximity, 0.3).
 transmission_mechanism(respiratory_droplets, 0.6).
 transmission_mechanism(surface_contamination, 0.1).
+
+% Establihing Expert System 
 
 % Define rules for diagnosis based on symptom severity
 diagnose_virus_infection(Patient) :-
@@ -81,5 +85,4 @@ random_symptom_severity(Severity) :-
     Severity = mild).
 
 % Example usage:
-% To simulate virus transmission from Patient1 to Patient2 with an incubation period:
-% transmit_virus(john, mary, IncubationPeriod).
+patient_info(john, [fever, dry_cough, tiredness], [age_above_70, gender_male], yes).
