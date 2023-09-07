@@ -28,33 +28,33 @@ transmission_mechanism(close_proximity, 0.3).
 transmission_mechanism(respiratory_droplets, 0.6).
 transmission_mechanism(surface_contamination, 0.1).
 
-% Establihing Expert System 
+% Establishing Expert System
 
 % Define rules for diagnosis based on symptom severity
-diagnose_virus_infection(Patient) :-
-    has_symptoms(Patient, Severity),
-    has_risk_factors(Patient),
+diagnose_virus_infection(Patient, Symptoms, RiskFactors) :-
     has_contact_history(Patient),
+    has_symptoms(Symptoms, Severity),
+    has_risk_factors(RiskFactors),
     (Severity == severe -> write('The patient is at high risk of having the virus infection. Seek immediate medical attention and follow medical guidance.');
     Severity == moderate -> write('The patient may have the virus infection. Seek medical advice and follow medical guidance.');
     write('The patient may have the virus infection. Continue monitoring symptoms and follow medical guidance.')),
-    recovery_and_hospitalization(Patient, Severity).
+    recovery_and_hospitalization(Severity).
 
-diagnose_virus_infection(Patient) :-
-    has_symptoms(Patient, Severity),
-    not(has_risk_factors(Patient)),
+diagnose_virus_infection(Patient, Symptoms, RiskFactors) :-
     has_contact_history(Patient),
+    has_symptoms(Symptoms, Severity),
+    not(has_risk_factors(RiskFactors)),
     (Severity == severe -> write('The patient may have the virus infection. Seek medical advice and follow medical guidance.');
     write('The patient may have the virus infection. Continue monitoring symptoms and follow medical guidance.')),
-    recovery_and_hospitalization(Patient, Severity).
+    recovery_and_hospitalization(Severity).
 
-diagnose_virus_infection(Patient) :-
+diagnose_virus_infection(Patient, _, _) :-
     not(has_symptoms(Patient)),
     write('The patient is less likely to have the virus infection.'),
-    recovery_and_hospitalization(Patient, none).
+    recovery_and_hospitalization(none).
 
 % Define rules for recovery and hospitalization
-recovery_and_hospitalization(Patient, Severity) :-
+recovery_and_hospitalization(Severity) :-
     (Severity == severe -> write('The patient with severe symptoms should seek immediate medical attention and hospitalization.');
     Severity == moderate -> write('Patients with moderate symptoms may require hospitalization depending on their condition. Consult a medical professional.');
     write('Patients with mild symptoms can recover at home. Get plenty of rest, stay hydrated, and consult a doctor if symptoms worsen or persist.')).
@@ -84,5 +84,9 @@ random_symptom_severity(Severity) :-
     X < 0.7 -> Severity = moderate;
     Severity = mild).
 
-% Example usage:
-patient_info(john, [fever, dry_cough, tiredness], [age_above_70, gender_male], yes).
+% Patient information
+patient_info(john, [fever, dry_cough, tiredness], [age_above_70, male, contact_with_infected]).
+
+% Patient Diagnosis question
+diagnose_virus_infection(john, [fever, dry_cough, tiredness], [age_above_70, male, contact_with_infected]).
+
