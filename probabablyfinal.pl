@@ -85,7 +85,8 @@ ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, Bi
 severity(SymptomsList, Severity) :-
     count_severe_symptoms(SymptomsList, SevereCount),
     count_moderate_symptoms(SymptomsList, ModerateCount),
-    determine_severity(SevereCount, ModerateCount, Severity).
+    count_mild_symptoms(SymptomsList, MildCount),
+    determine_severity(SevereCount, ModerateCount, MildCount, Severity).
 
 count_severe_symptoms(SymptomsList, Count) :-
     include(severe_symptom, SymptomsList, SevereSymptoms),
@@ -95,17 +96,24 @@ count_moderate_symptoms(SymptomsList, Count) :-
     include(moderate_symptom, SymptomsList, ModerateSymptoms),
     length(ModerateSymptoms, Count).
 
+count_mild_symptoms(SymptomsList, Count) :-
+    include(mild_symptom, SymptomsList, MildSymptoms),
+    length(MildSymptoms, Count).
+
 severe_symptom(Symptom) :-
     symptom(Symptom, severe).
 
 moderate_symptom(Symptom) :-
     symptom(Symptom, moderate).
 
-determine_severity(SevereCount, _, severe) :-
-    SevereCount >= 1.  % Adjust the criteria for severe symptoms.
-determine_severity(_, ModerateCount, moderate) :-
-    ModerateCount >= 1.  % Adjust the criteria for moderate symptoms.
-determine_severity(_, _, mild).
+mild_symptom(Symptom) :-
+    symptom(Symptom, mild).
+
+determine_severity(SevereCount, _, _, severe) :-
+    SevereCount >= 2.  % Define your criteria for severe symptoms.
+determine_severity(_, ModerateCount, _, moderate) :-
+    ModerateCount >= 2.  % Define your criteria for moderate symptoms.
+determine_severity(_, _, _, mild).
 
 % Define a predicate to diagnose and recommend based on patient data
 diagnose_and_recommend(PatientName, SymptomsList, RiskFactorsList, BioData, RecentTravel) :-
@@ -175,4 +183,3 @@ diagnosis_message(_, _, _, _) :-
 % Run the interactive diagnosis program
 :- dynamic has_symptoms/2, has_risk_factors/2. % To allow dynamic facts
 start_diagnosis.
-
