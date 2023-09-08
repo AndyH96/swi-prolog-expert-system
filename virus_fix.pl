@@ -116,3 +116,4 @@ recovery_and_hospitalization(Severity, ContactHistory) :-
     Severity == moderate -> 
         (ContactHistory == yes -> write('Patients with moderate symptoms and contact history may require hospitalization depending on their condition. Consult a medical professional.');
         write('Patients with moderate symptoms may require
+
