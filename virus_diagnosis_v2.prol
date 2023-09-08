@@ -1,17 +1,20 @@
-% Define facts about symptoms and risk factors
-symptom(fever).
-symptom(dry_cough).
-symptom(tiredness).
-symptom(aches_and_pains).
-symptom(sore_throat).
-symptom(diarrhea).
-symptom(conjunctivitis).
-symptom(headache).
-symptom(anosmia).
-symptom(shortness_of_breath).
-symptom(chest_pain).
-symptom(loss_of_speech_or_movement).
+% Knowledge Base
 
+% Define facts about symptoms and risk factors
+symptom(fever, mild).
+symptom(dry_cough, mild).
+symptom(tiredness, mild).
+symptom(aches_and_pains, mild).
+symptom(sore_throat, mild).
+symptom(diarrhea, mild).
+symptom(conjunctivitis, mild).
+symptom(headache, moderate).
+symptom(anosmia, moderate).
+symptom(shortness_of_breath, severe).
+symptom(chest_pain, severe).
+symptom(loss_of_speech_or_movement, severe).
+
+% Define risk factors for other patients if needed
 risk_factor(age_above_70).
 risk_factor(hypertension).
 risk_factor(diabetes).
@@ -19,48 +22,113 @@ risk_factor(cardiovascular_disease).
 risk_factor(chronic_respiratory_disease).
 risk_factor(cancer).
 risk_factor(male).
+risk_factor(contact_with_infected).
 
-% Define rules for diagnosis
-diagnose_virus_infection(Patient) :-
-    has_symptoms(Patient),
-    (has_risk_factors(Patient) ; not(has_risk_factors(Patient))),
-    write('The patient may have the virus infection. Please seek medical advice.').
-    
-diagnose_virus_infection(Patient) :-
-    not(has_symptoms(Patient)),
+% Define facts about transmission mechanisms and probabilities
+transmission_mechanism(close_proximity, 0.3).
+transmission_mechanism(respiratory_droplets, 0.6).
+transmission_mechanism(surface_contamination, 0.1).
+
+% Expert System
+
+% Define rules for diagnosis based on symptom severity
+diagnose_virus_infection(Patient, Symptoms, RiskFactors, BioData, History) :-
+    has_contact_history(Patient, ContactHistory),
+    parse_symptoms([Fever, DryCough, SoreThroat, Diarrhea, Conjunctivitis, Headache, Anosmia | MoreSymptoms], Symptoms),
+    parse_risk_factors([AgeAbove70, Hypertension, Diabetes, CardiovascularDisease, ChronicRespiratoryDisease, Cancer | MoreRiskFactors], RiskFactors),
+    severity(Symptoms, Severity),
+    diagnosis_message(Severity, ContactHistory),
+    process_bio_data(Patient, BioData, Age, Gender),
+    process_history(Patient, History, RecentTravel),
+    recovery_and_hospitalization(Severity, ContactHistory, Age, Gender, RecentTravel).
+
+% Rules for handling different severity levels
+diagnosis_message(severe, yes) :-
+    write('The patient is at high risk of having the virus infection. Seek immediate medical attention and follow medical guidance.').
+diagnosis_message(moderate, yes) :-
+    write('The patient may have the virus infection. Seek medical advice and follow medical guidance.').
+diagnosis_message(_, yes) :-
+    write('The patient may have the virus infection. Continue monitoring symptoms and follow medical guidance.').
+diagnosis_message(_, no) :-
     write('The patient is less likely to have the virus infection.').
-    
-has_symptoms(Patient) :-
-    write('Does the patient have any of the following symptoms? (yes/no)\n'),
-    check_symptoms(Patient).
 
-check_symptoms(Patient) :-
-    symptom(S),
-    write(S),
-    write('? '),
-    read(Answer),
-    (Answer == yes ; (Answer == no, check_more_symptoms(Patient))).
+% Define rules for recovery and hospitalization
+% (You can modify these messages as needed)
+recovery_and_hospitalization(severe, yes, Age, _, _) :-
+    Age >= 70,
+    write('The patient with severe symptoms and age above 70 should seek immediate medical attention and hospitalization.').
+recovery_and_hospitalization(severe, yes, _, male, _) :-
+    write('The male patient with severe symptoms should seek immediate medical attention and hospitalization.').
+recovery_and_hospitalization(severe, yes, _, _, yes) :-
+    write('The patient with severe symptoms and recent travel history should seek immediate medical attention and hospitalization.').
+recovery_and_hospitalization(severe, yes, _, _, _) :-
+    write('The patient with severe symptoms should seek immediate medical attention and hospitalization.').
 
-check_more_symptoms(Patient) :-
-    write('Are there any additional symptoms? (yes/no)\n'),
-    read(Answer),
-    (Answer == yes, check_symptoms(Patient) ; Answer == no).
+recovery_and_hospitalization(moderate, yes, Age, _, _) :-
+    Age >= 70,
+    write('The patient with moderate symptoms, age above 70, and contact history may require hospitalization depending on their condition. Consult a medical professional.').
+recovery_and_hospitalization(moderate, yes, _, male, _) :-
+    write('The male patient with moderate symptoms and contact history may require hospitalization depending on their condition. Consult a medical professional.').
+recovery_and_hospitalization(moderate, yes, _, _, yes) :-
+    write('The patient with moderate symptoms, recent travel history, and contact history may require hospitalization depending on their condition. Consult a medical professional.').
+recovery_and_hospitalization(moderate, yes, _, _, _) :-
+    write('The patient with moderate symptoms may require hospitalization depending on their condition. Consult a medical professional.').
 
-has_risk_factors(Patient) :-
-    write('Does the patient have any of the following risk factors? (yes/no)\n'),
-    check_risk_factors(Patient).
+recovery_and_hospitalization(_, yes, _, _, _) :-
+    write('Patients with mild symptoms can recover at home. Get plenty of rest, stay hydrated, and consult a doctor if symptoms worsen or persist.').
 
-check_risk_factors(Patient) :-
-    risk_factor(RF),
-    write(RF),
-    write('? '),
-    read(Answer),
-    (Answer == yes ; (Answer == no, check_more_risk_factors(Patient))).
+% Process bio data for the patient (e.g., age, gender)
+process_bio_data(Patient, BioData, Age, Gender) :-
+    % Example: Extract age and gender from BioData
+    extract_age_and_gender(Patient, BioData, Age, Gender).
 
-check_more_risk_factors(Patient) :-
-    write('Are there any additional risk factors? (yes/no)\n'),
-    read(Answer),
-    (Answer == yes, check_risk_factors(Patient) ; Answer == no).
+% Example: Extract age and gender from BioData
+extract_age_and_gender(john, BioData, 45, male).
+% Add more examples for other patients
 
-% Example usage:
-% diagnose_virus_infection(john).
+% Process history of events for the patient (e.g., recent travel, exposure)
+process_history(Patient, History, RecentTravel) :-
+    % Example: Check for recent travel in History
+    check_for_recent_travel(Patient, History, RecentTravel).
+
+% Example: Check for recent travel in History
+check_for_recent_travel(john, History, yes) :-
+    % If John recently traveled, set RecentTravel to yes
+    % You can add your logic here based on the patient's history
+    % For example, check if there are mentions of recent travel in the History.
+    ... % Add your logic here
+    true.
+check_for_recent_travel(_, _, no). % Default to no for other patients
+
+% Additional rules for diagnosis
+has_contact_history(Patient, Answer) :-
+    writeln('Has the patient had close contact with a confirmed virus case in the last 14 days? (yes/no)'),
+    read_line_to_string(user_input, Answer).
+
+% Define facts about symptoms for each patient
+has_symptoms(john, [fever, dry_cough, tiredness]).
+% Define symptoms for other patients if needed.
+
+% Simulate virus transmission
+transmit_virus(Patient1, Patient2, IncubationPeriod) :-
+    has_virus(Patient1, IncubationPeriod),
+    transmission_mechanism(Mechanism, Probability),
+    random(X),
+    (X < Probability -> infect(Patient2, IncubationPeriod); true).
+
+% Define infection with incubation period and symptom severity
+infect(Patient, IncubationPeriod) :-
+    random(X),
+    (X < 0.4 -> random_symptom_severity(Severity), assert(has_virus(Patient, IncubationPeriod, Severity)); true).
+
+% Define random symptom severity
+random_symptom_severity(Severity) :-
+    random(X),
+    (X < 0.2 -> Severity = severe;
+    X < 0.7 -> Severity = moderate;
+    Severity = mild).
+
+% Define facts about risk factors for patients
+has_risk_factors(john, [age_above_70, male, contact_with_infected]).
+% Define risk factors for other patients if needed.
+
