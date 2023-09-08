@@ -128,3 +128,61 @@ has_risk_factors(carol, [chronic_respiratory_disease]).
 % Simulate virus transmission (not implemented based on the scenario)
 % You can implement this if needed based on your requirements.
 
+% Interactive Diagnosis Code (Add this part at the end of your file)
+% Define a predicate to start the diagnosis
+
+start_diagnosis :-
+    writeln('Welcome to the Virus Infection Diagnosis System.'),
+    writeln('Please enter the patient\'s name:'),
+    read_line_to_string(user_input, PatientName),
+    ask_for_contact_history(PatientName).
+
+% Define predicates to ask for patient information
+ask_for_contact_history(PatientName) :-
+    writeln('Has the patient had close contact with an infected person in the last 14 days? (yes/no)'),
+    read_line_to_string(user_input, ContactHistory),
+    ask_for_symptoms(PatientName, ContactHistory).
+
+ask_for_symptoms(PatientName, ContactHistory) :-
+    writeln('Please enter the patient\'s symptoms separated by commas (e.g., fever, dry_cough, tiredness):'),
+    read_line_to_string(user_input, SymptomsInput),
+    split_string(SymptomsInput, ",", " ", SymptomsList),
+    ask_for_risk_factors(PatientName, ContactHistory, SymptomsList).
+
+ask_for_risk_factors(PatientName, ContactHistory, SymptomsList) :-
+    writeln('Please enter the patient\'s risk factors separated by commas (e.g., age_above_70, hypertension):'),
+    read_line_to_string(user_input, RiskFactorsInput),
+    split_string(RiskFactorsInput, ",", " ", RiskFactorsList),
+    ask_for_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList).
+
+ask_for_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList) :-
+    writeln('Please enter the patient\'s age:'),
+    read_line_to_string(user_input, AgeInput),
+    atom_number(AgeInput, Age),
+    writeln('Please enter the patient\'s gender (male/female):'),
+    read_line_to_string(user_input, Gender),
+    ask_for_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, [Age, Gender]).
+
+ask_for_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, BioData) :-
+    writeln('Does the patient have a recent travel history? (yes/no)'),
+    read_line_to_string(user_input, RecentTravel),
+    diagnose_virus_infection(PatientName, SymptomsList, RiskFactorsList, BioData, RecentTravel),
+    get_diagnosis_result(PatientName).
+
+% Define a predicate to get the diagnosis result
+get_diagnosis_result(PatientName) :-
+    writeln('Diagnosis Result:'),
+    % You can print the diagnosis result here based on the patient's information.
+    restart_or_exit.
+
+% Define a predicate to restart or exit the program
+restart_or_exit :-
+    writeln('Do you want to diagnose another patient? (yes/no)'),
+    read_line_to_string(user_input, Answer),
+    (Answer == "yes" -> start_diagnosis; writeln('Goodbye!')).
+
+% Run the interactive diagnosis program
+:- dynamic has_symptoms/2, has_risk_factors/2. % To allow dynamic facts
+start_diagnosis.
+
+
