@@ -63,7 +63,7 @@ ask_symptoms(PatientName, ContactHistory) :-
     ask_risk_factors(PatientName, ContactHistory, SymptomsList).
 
 ask_risk_factors(PatientName, ContactHistory, SymptomsList) :-
-    writeln('Please enter the patient\'s risk factors separated by commas (e.g., age_above_70, hypertension, cancer, male, diabetes):'),
+    writeln('Please enter the patient\'s risk factors separated by commas (e.g., age_above_70, hypertension):'),
     read_line_to_string(user_input, RiskFactorsInput),
     split_string(RiskFactorsInput, ",", " ", RiskFactorsList),
     ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList).
@@ -72,9 +72,17 @@ ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList) :
     writeln('Please enter the patient\'s age:'),
     read_line_to_string(user_input, AgeInput),
     atom_number(AgeInput, Age),
-    writeln('Please enter the patient\'s gender (male/female):'),
-    read_line_to_string(user_input, Gender),
-    ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, [Age, Gender]).
+    (validate_age(Age) ->
+        writeln('Please enter the patient\'s gender (male/female):'),
+        read_line_to_string(user_input, Gender),
+        (validate_gender(Gender) ->
+            ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, [Age, Gender]);
+            writeln('Invalid gender input. Please enter either "male" or "female".'),
+            ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList)
+        );
+        writeln('Invalid age input. Please enter a valid age.'),
+        ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList)
+    ).
 
 ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, BioData) :-
     writeln('Does the patient have a recent travel history? (yes/no)'),
@@ -154,25 +162,6 @@ has_risk_factors(alice, [diabetes, cancer]).
 has_risk_factors(bob, [hypertension, cardiovascular_disease, male]).
 has_risk_factors(carol, [chronic_respiratory_disease]).
 
-% Diagnosis message for mild severity
-diagnosis_message(_, _, mild, _) :-
-    write('The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
-
-% Diagnosis message for moderate severity
-diagnosis_message(_, _, moderate, _) :-
-    write('The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
-
-% Diagnosis message for severe severity
-diagnosis_message(_, _, severe, yes) :-
-    write('The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.').
-
-diagnosis_message(_, _, severe, no) :-
-    write('The patient is at moderate risk of having a severe virus infection. Please seek medical attention and follow medical guidance.').
-
-% Default diagnosis message (if none of the above conditions match)
-diagnosis_message(_, _, _, _) :-
-    write('The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
-
 % Define rules for recovery and hospitalization
 recovery_and_hospitalization(severe, Age, RiskFactorsList) :-
     (member(age_above_70, RiskFactorsList); (member(male, RiskFactorsList), member([hypertension, diabetes, cardiovascular_disease, chronic_respiratory_disease, cancer], RiskFactorsList))),
@@ -189,8 +178,16 @@ recovery_and_hospitalization(_, _, Gender) :-
 recovery_and_hospitalization(_, _, _) :-
     write('Patients with mild symptoms can recover at home. Get plenty of rest, stay hydrated, and consult a doctor if symptoms worsen or persist.').
 
+% Define predicates for age and gender validation
+validate_age(Age) :-
+    Age >= 0,
+    Age < 150.
+
+validate_gender(Gender) :-
+    member(Gender, [male, female]).
 % Run the interactive diagnosis program
 :- dynamic has_symptoms/2, has_risk_factors/2. % To allow dynamic facts
 start_diagnosis.
+
 
 

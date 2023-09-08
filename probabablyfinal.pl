@@ -109,10 +109,18 @@ moderate_symptom(Symptom) :-
 mild_symptom(Symptom) :-
     symptom(Symptom, mild).
 
-determine_severity(SevereCount, _, _, severe) :-
-    SevereCount >= 2.  % Define your criteria for severe symptoms.
+% Define a predicate to determine severity based on symptoms
+determine_severity(SevereCount, _, 1, mild) :-
+    SevereCount = 0, !.  % If there is exactly 1 mild symptom and no severe symptoms, treat as mild.
+determine_severity(SevereCount, _, MildCount, mild) :-
+    SevereCount = 0,     % If there are no severe symptoms and not 3+ mild symptoms, treat as mild.
+    MildCount >= 1, !.
+determine_severity(SevereCount, _, MildCount, severe) :-
+    SevereCount >= 1.    % If there is at least one severe symptom, treat as severe.
+determine_severity(_, _, MildCount, severe) :-
+    MildCount >= 3.      % If at least 3 mild symptoms are present, treat as severe.
 determine_severity(_, ModerateCount, _, moderate) :-
-    ModerateCount >= 2.  % Define your criteria for moderate symptoms.
+    ModerateCount >= 1.  % Define your criteria for moderate symptoms.
 determine_severity(_, _, _, mild).
 
 % Define a predicate to diagnose and recommend based on patient data
