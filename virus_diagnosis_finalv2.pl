@@ -14,6 +14,10 @@ symptom(shortness_of_breath, severe).
 symptom(chest_pain, severe).
 symptom(loss_of_speech_or_movement, severe).
 
+% Define facts about risk factors for each patient
+has_risk_factors(john, [age_above_70, male, contact_with_infected]).
+% Define risk factors for other patients if needed.
+
 risk_factor(age_above_70).
 risk_factor(hypertension).
 risk_factor(diabetes).
@@ -34,7 +38,7 @@ transmission_mechanism(surface_contamination, 0.1).
 diagnose_virus_infection(Patient, Symptoms, RiskFactors) :-
     has_contact_history(Patient),
     has_symptoms(Patient, Symptoms),
-    has_risk_factors(RiskFactors),
+    has_risk_factors(Patient, RiskFactors),
     (severity(Symptoms, Severity), Severity == severe -> write('The patient is at high risk of having the virus infection. Seek immediate medical attention and follow medical guidance.');
     severity(Symptoms, Severity), Severity == moderate -> write('The patient may have the virus infection. Seek medical advice and follow medical guidance.');
     write('The patient may have the virus infection. Continue monitoring symptoms and follow medical guidance.')),
@@ -43,7 +47,7 @@ diagnose_virus_infection(Patient, Symptoms, RiskFactors) :-
 diagnose_virus_infection(Patient, Symptoms, RiskFactors) :-
     has_contact_history(Patient),
     has_symptoms(Patient, Symptoms),
-    not(has_risk_factors(RiskFactors)),
+    not(has_risk_factors(Patient, RiskFactors)),
     (severity(Symptoms, Severity), Severity == severe -> write('The patient may have the virus infection. Seek medical advice and follow medical guidance.');
     write('The patient may have the virus infection. Continue monitoring symptoms and follow medical guidance.')),
     recovery_and_hospitalization(Severity).
