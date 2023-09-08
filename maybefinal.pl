@@ -81,6 +81,40 @@ ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, Bi
     read_line_to_string(user_input, RecentTravel),
     diagnose_and_recommend(PatientName, SymptomsList, RiskFactorsList, BioData, RecentTravel).
 
+% Define a predicate to calculate severity based on symptoms
+severity(SymptomsList, Severity) :-
+    count_severe_symptoms(SymptomsList, SevereCount),
+    count_moderate_symptoms(SymptomsList, ModerateCount),
+    count_mild_symptoms(SymptomsList, MildCount),
+    determine_severity(SevereCount, ModerateCount, MildCount, Severity).
+
+count_severe_symptoms(SymptomsList, Count) :-
+    include(severe_symptom, SymptomsList, SevereSymptoms),
+    length(SevereSymptoms, Count).
+
+count_moderate_symptoms(SymptomsList, Count) :-
+    include(moderate_symptom, SymptomsList, ModerateSymptoms),
+    length(ModerateSymptoms, Count).
+
+count_mild_symptoms(SymptomsList, Count) :-
+    include(mild_symptom, SymptomsList, MildSymptoms),
+    length(MildSymptoms, Count).
+
+severe_symptom(Symptom) :-
+    symptom(Symptom, severe).
+
+moderate_symptom(Symptom) :-
+    symptom(Symptom, moderate).
+
+mild_symptom(Symptom) :-
+    symptom(Symptom, mild).
+
+determine_severity(SevereCount, _, _, severe) :-
+    SevereCount >= 2.  % Define your criteria for severe symptoms.
+determine_severity(_, ModerateCount, _, moderate) :-
+    ModerateCount >= 2.  % Define your criteria for moderate symptoms.
+determine_severity(_, _, _, mild).
+
 % Define a predicate to diagnose and recommend based on patient data
 diagnose_and_recommend(PatientName, SymptomsList, RiskFactorsList, BioData, RecentTravel) :-
     % Calculate severity based on symptoms
@@ -105,7 +139,7 @@ process_history(PatientName, RecentTravel, Severity, Age, RiskFactorsList) :-
     recovery_and_hospitalization(Severity, Age, RiskFactorsList).
 
 % Example: Extract age from BioData (assumed)
-extract_age(john, 45).
+extract_age(john, 75).
 extract_age(alice, 28).
 extract_age(bob, 62).
 extract_age(carol, 35).
@@ -124,9 +158,9 @@ has_symptoms(carol, [fever, dry_cough, aches_and_pains, tiredness]).
 % Define symptoms for other patients if needed.
 
 % Define facts about risk factors for each patient
-has_risk_factors(john, [age_above_70, hypertension]).
+has_risk_factors(john, [age_above_70, hypertension, male]).
 has_risk_factors(alice, [diabetes, cancer]).
-has_risk_factors(bob, [age_above_70, hypertension, cardiovascular_disease, male]).
+has_risk_factors(bob, [hypertension, cardiovascular_disease, male]).
 has_risk_factors(carol, [chronic_respiratory_disease]).
 % Define risk factors for other patients if needed.
 
@@ -168,6 +202,3 @@ recovery_and_hospitalization(_, _, _) :-
 % Run the interactive diagnosis program
 :- dynamic has_symptoms/2, has_risk_factors/2. % To allow dynamic facts
 start_diagnosis.
-
-
-
