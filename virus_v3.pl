@@ -14,9 +14,6 @@ symptom(shortness_of_breath, severe).
 symptom(chest_pain, severe).
 symptom(loss_of_speech_or_movement, severe).
 
-% Define facts about risk factors for each patient
-has_risk_factors(john, [age_above_70, male, contact_with_infected]).
-
 % Define risk factors for other patients if needed.
 risk_factor(age_above_70).
 risk_factor(hypertension).
@@ -36,31 +33,33 @@ transmission_mechanism(surface_contamination, 0.1).
 
 % Define rules for diagnosis based on symptom severity
 diagnose_virus_infection(Patient, Symptoms, RiskFactors) :-
-    has_contact_history(Patient),
+    has_contact_history(Patient, ContactHistory),
     has_symptoms(Patient, Symptoms),
     has_risk_factors(Patient, RiskFactors),
     (severity(Symptoms, Severity), Severity == severe -> write('The patient is at high risk of having the virus infection. Seek immediate medical attention and follow medical guidance.');
     severity(Symptoms, Severity), Severity == moderate -> write('The patient may have the virus infection. Seek medical advice and follow medical guidance.');
     write('The patient may have the virus infection. Continue monitoring symptoms and follow medical guidance.')),
-    recovery_and_hospitalization(Severity).
+    recovery_and_hospitalization(Severity, ContactHistory).
 
 diagnose_virus_infection(Patient, Symptoms, RiskFactors) :-
-    has_contact_history(Patient),
+    has_contact_history(Patient, ContactHistory),
     has_symptoms(Patient, Symptoms),
     not(has_risk_factors(Patient, RiskFactors)),
     (severity(Symptoms, Severity), Severity == severe -> write('The patient may have the virus infection. Seek medical advice and follow medical guidance.');
     write('The patient may have the virus infection. Continue monitoring symptoms and follow medical guidance.')),
-    recovery_and_hospitalization(Severity).
+    recovery_and_hospitalization(Severity, ContactHistory).
 
 diagnose_virus_infection(Patient, _, _) :-
     not(has_symptoms(Patient)),
     write('The patient is less likely to have the virus infection.'),
-    recovery_and_hospitalization(none).
+    recovery_and_hospitalization(none, no).
 
 % Define rules for recovery and hospitalization
-recovery_and_hospitalization(Severity) :-
+recovery_and_hospitalization(Severity, ContactHistory) :-
     (Severity == severe -> write('The patient with severe symptoms should seek immediate medical attention and hospitalization.');
-    Severity == moderate -> write('Patients with moderate symptoms may require hospitalization depending on their condition. Consult a medical professional.');
+    Severity == moderate -> 
+        (ContactHistory == yes -> write('Patients with moderate symptoms and contact history may require hospitalization depending on their condition. Consult a medical professional.');
+        write('Patients with moderate symptoms may require hospitalization depending on their condition. Consult a medical professional.'));
     write('Patients with mild symptoms can recover at home. Get plenty of rest, stay hydrated, and consult a doctor if symptoms worsen or persist.')).
 
 % Define severity based on symptoms
@@ -78,10 +77,9 @@ count_severe_symptoms(Symptoms, Count) :-
 severe_symptoms([shortness_of_breath, chest_pain, loss_of_speech_or_movement]).
 
 % Additional rules for diagnosis
-has_contact_history(Patient) :-
+has_contact_history(Patient, Answer) :-
     writeln('Has the patient had close contact with a confirmed virus case in the last 14 days? (yes/no)'),
-    read_line_to_string(user_input, Answer),
-    (Answer == "yes" -> true; Answer == "no" -> true; false).
+    read_line_to_string(user_input, Answer).
 
 % Define facts about symptoms for each patient
 has_symptoms(john, [fever, dry_cough, tiredness]).
@@ -105,3 +103,13 @@ random_symptom_severity(Severity) :-
     (X < 0.2 -> Severity = severe;
     X < 0.7 -> Severity = moderate;
     Severity = mild).
+
+% Define facts about risk factors for patients
+has_risk_factors(john, [age_above_70, male, contact_with_infected]).
+
+% Define facts about symptoms for each patients
+has_symptoms(john, [fever, dry_cough, tiredness]).
+has_symptoms(jane, [fever, sore_throat, tiredness]).
+has_symptoms(bob, [fever, shortness_of_breath]).
+
+
