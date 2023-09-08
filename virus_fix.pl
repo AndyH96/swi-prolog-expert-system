@@ -63,7 +63,7 @@ ask_symptoms(PatientName, ContactHistory) :-
     ask_risk_factors(PatientName, ContactHistory, SymptomsList).
 
 ask_risk_factors(PatientName, ContactHistory, SymptomsList) :-
-    writeln('Please enter the patient\'s risk factors separated by commas (e.g., age_above_70, hypertension):'),
+    writeln('Please enter the patient\'s risk factors separated by commas (e.g., age_above_70, hypertension, cancer, male, diabetes):'),
     read_line_to_string(user_input, RiskFactorsInput),
     split_string(RiskFactorsInput, ",", " ", RiskFactorsList),
     ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList).
@@ -163,16 +163,34 @@ diagnosis_message(_, _, moderate, _) :-
     write('The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
 
 % Diagnosis message for severe severity
-diagnosis_message(_, SymptomsList, severe, RecentTravel) :-
-    % Check if the patient has severe symptoms or specific risk factors
-    (member(RiskFactor, [age_above_70, hypertension, diabetes, cardiovascular_disease, chronic_respiratory_disease, cancer, male]), member(RiskFactor, RiskFactorsList)),
+diagnosis_message(_, _, severe, yes) :-
     write('The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.').
+
+diagnosis_message(_, _, severe, no) :-
+    write('The patient is at moderate risk of having a severe virus infection. Please seek medical attention and follow medical guidance.').
 
 % Default diagnosis message (if none of the above conditions match)
 diagnosis_message(_, _, _, _) :-
     write('The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
 
+% Define rules for recovery and hospitalization
+recovery_and_hospitalization(severe, Age, RiskFactorsList) :-
+    (member(age_above_70, RiskFactorsList); (member(male, RiskFactorsList), member([hypertension, diabetes, cardiovascular_disease, chronic_respiratory_disease, cancer], RiskFactorsList))),
+    write('The patient with severe symptoms, advanced age, or pre-existing health conditions should seek immediate medical attention and hospitalization.').
+recovery_and_hospitalization(moderate, Age, RiskFactorsList) :-
+    (member(age_above_70, RiskFactorsList); (member(male, RiskFactorsList), member([hypertension, diabetes, cardiovascular_disease, chronic_respiratory_disease, cancer], RiskFactorsList))),
+    write('The patient with moderate symptoms, advanced age, or pre-existing health conditions may require hospitalization depending on their condition. Consult a medical professional.').
+recovery_and_hospitalization(_, Age, _) :-
+    Age >= 70,
+    write('Patients above 70 years old should consult a doctor even for mild symptoms.').
+recovery_and_hospitalization(_, _, Gender) :-
+    Gender == male,
+    write('Male patients with symptoms and recent travel history should consult a doctor.').
+recovery_and_hospitalization(_, _, _) :-
+    write('Patients with mild symptoms can recover at home. Get plenty of rest, stay hydrated, and consult a doctor if symptoms worsen or persist.').
+
 % Run the interactive diagnosis program
 :- dynamic has_symptoms/2, has_risk_factors/2. % To allow dynamic facts
 start_diagnosis.
+
 
