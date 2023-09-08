@@ -57,7 +57,7 @@ ask_contact_history(PatientName) :-
     ask_symptoms(PatientName, ContactHistory).
 
 ask_symptoms(PatientName, ContactHistory) :-
-    writeln('Please enter the patient\'s symptoms separated by commas (e.g., fever, dry_cough, tiredness):'),
+    writeln('Please enter the patient\'s symptoms separated by commas (e.g., fever, dry_cough, shortness_of_breath, loss_of_speech_or_movement):'),
     read_line_to_string(user_input, SymptomsInput),
     split_string(SymptomsInput, ",", " ", SymptomsList),
     ask_risk_factors(PatientName, ContactHistory, SymptomsList).
@@ -151,35 +151,30 @@ check_for_recent_travel(bob, yes).
 check_for_recent_travel(carol, yes).
 
 % Define facts about symptoms for each patient
-has_symptoms(john, [fever, dry_cough, tiredness]).
+has_symptoms(john, [fever, dry_cough, tiredness, shortness_of_breath]).
 has_symptoms(alice, [fever, dry_cough, sore_throat]).
 has_symptoms(bob, [shortness_of_breath, chest_pain, headache, tiredness]).
-has_symptoms(carol, [fever, dry_cough, aches_and_pains, tiredness]).
-% Define symptoms for other patients if needed.
+has_symptoms(carol, [asymptomatic]).
 
 % Define facts about risk factors for each patient
 has_risk_factors(john, [age_above_70, hypertension, male]).
 has_risk_factors(alice, [diabetes, cancer]).
 has_risk_factors(bob, [hypertension, cardiovascular_disease, male]).
 has_risk_factors(carol, [chronic_respiratory_disease]).
-% Define risk factors for other patients if needed.
-
-% Simulate virus transmission (not implemented based on the scenario)
-% You can implement this if needed based on your requirements.
 
 % Define rules for handling different severity levels
 diagnosis_message(_, _, severe, yes) :-
     write('The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.').
 diagnosis_message(_, _, severe, no) :-
-    write('The patient is at high risk of having a severe virus infection, especially without recent travel history. Seek immediate medical attention and follow medical guidance.').
+    write('The patient is at a moderately high risk of having a severe virus infection. Please kindly seek medical attention and follow medical guidance.').
 diagnosis_message(_, _, moderate, yes) :-
     write('The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
 diagnosis_message(_, _, moderate, no) :-
-    write('The patient may have a moderate virus infection, especially without recent travel history. Seek medical advice and follow medical guidance.').
+    write('The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
 diagnosis_message(_, _, mild, yes) :-
     write('The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
 diagnosis_message(_, _, mild, no) :-
-    write('The patient may have a mild virus infection, especially without recent travel history. Continue monitoring symptoms and follow medical guidance.').
+    write('The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
 diagnosis_message(_, _, _, _) :-
     write('The patient is less likely to have the virus infection.').
 
