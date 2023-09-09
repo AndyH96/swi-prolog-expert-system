@@ -105,7 +105,7 @@ display_symptom_options :-
     writeln('12. Loss of speech or movement'),
     writeln('13. Asymptomatic').
 
-% Process the user's input for symptoms
+% Process the input for symptoms
 process_symptoms_input(PatientName, ContactHistory, SymptomsInput) :-
     % Convert the input to lowercase and split
     downcase_atom(SymptomsInput, LowercaseSymptomsInput),
@@ -116,14 +116,14 @@ process_symptoms_input(PatientName, ContactHistory, SymptomsInput) :-
 
 % Define a predicate to ask for risk factors and process the input
 ask_risk_factors(PatientName, ContactHistory) :-
-    writeln('Please enter the patient\'s risk factors separated by commas (e.g., age_above_70, hypertension):'),
+    writeln('Please enter the patient\'s risk factors:'),
     display_risk_factors,  % Display the list of risk factor options
     read_line_to_string(user_input, RiskFactorsInput),
     process_risk_factors_input(PatientName, ContactHistory, RiskFactorsInput).
 
 % Display the list of risk factor options to the user
 display_risk_factors :-
-    writeln('Select all that apply separated by commas:'),
+    writeln('Select all that apply, separated by commas(e.g., age_above_70, hypertension):'),
     writeln('1. Age above 70'),
     writeln('2. Hypertension'),
     writeln('3. Diabetes'),
@@ -132,7 +132,7 @@ display_risk_factors :-
     writeln('6. Cancer'),
     writeln('7. Male').
 
-% Process the user's input for risk factors
+% Process the input for risk factors
 process_risk_factors_input(PatientName, ContactHistory, RiskFactorsInput) :-
     % Convert the input to lowercase and split
     downcase_atom(RiskFactorsInput, LowercaseRiskFactorsInput),
