@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Knowledge Base %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Knowledge Base %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Define facts about symptoms and risk factors
 symptom(fever, mild).
 symptom(dry_cough, mild).
@@ -38,13 +38,13 @@ virus_survival_time(stainless_steel, days(3)).
 incubation_period_range(1, 14).
 
 % Dynamic Facts for Patient Data
-:- dynamic has_symptoms/2, has_risk_factors/2.
+:- dynamic has_symptoms/2, has_risk_factors/2, has_age_gender/3.
 
-% Example: Extract age from BioData (assumed)
-extract_age(john, 75).
-extract_age(alice, 28).
-extract_age(bob, 62).
-extract_age(carol, 35).
+% Example: Extract age and gender from BioData (assumed)
+extract_age_gender(john, 75, male).
+extract_age_gender(alice, 28, female).
+extract_age_gender(bob, 62, male).
+extract_age_gender(carol, 35, female).
 
 % Define facts about symptoms for each patient
 has_symptoms(john, [fever, dry_cough, tiredness, shortness_of_breath, chest_pain]).
@@ -58,7 +58,7 @@ has_risk_factors(alice, [diabetes, cancer]).
 has_risk_factors(bob, [male]).
 has_risk_factors(carol, [chronic_respiratory_disease]).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Diagnosis Code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Diagnosis Code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define a predicate to start the diagnosis
 start_diagnosis :-
@@ -72,7 +72,8 @@ ask_patient_questions(PatientName) :-
     writeln('Do you want to provide new information about the patient\'s symptoms and risk factors? (yes/no)'),
     read_line_to_string(user_input, Response),
     (Response = 'yes' ->
-        ask_symptoms(PatientName)
+        ask_symptoms(PatientName),
+        ask_risk_factors(PatientName)
     ;   ask_contact_history(PatientName)
     ).
 
@@ -91,19 +92,15 @@ ask_symptoms(PatientName) :-
 % Display the list of symptom options to the user
 display_symptom_options :-
     writeln('Select all that apply separated by commas:'),
-    writeln('1. Fever'),
-    writeln('2. Dry cough'),
-    writeln('3. Tiredness'),
-    writeln('4. Aches and pains'),
-    writeln('5. Sore throat'),
-    writeln('6. Diarrhea'),
-    writeln('7. Conjunctivitis'),
-    writeln('8. Headache'),
-    writeln('9. Anosmia'),
-    writeln('10. Shortness of breath'),
-    writeln('11. Chest pain'),
-    writeln('12. Loss of speech or movement'),
-    writeln('13. Asymptomatic').
+    findall(Symptom, symptom(Symptom, _), SymptomsList),
+    print_symptom_list(SymptomsList, 1).
+
+% Print a list of symptoms with indices
+print_symptom_list([], _).
+print_symptom_list([Symptom | Rest], Index) :-
+    format('~d. ~w~n', [Index, Symptom]),
+    NextIndex is Index + 1,
+    print_symptom_list(Rest, NextIndex).
 
 % Process the input for symptoms
 process_symptoms_input(PatientName, SymptomsInput) :-
@@ -129,21 +126,23 @@ valid_symptoms([Symptom | Rest]) :-
 
 % Define a predicate to ask for risk factors and process the input
 ask_risk_factors(PatientName) :-
-    writeln('Please enter the patient\'s risk factors separated by commas (e.g., age_above_70, hypertension):'),
+    writeln('Please enter the patient\'s risk factors:'),
     display_risk_factors,  % Display the list of risk factor options
     read_line_to_string(user_input, RiskFactorsInput),
     process_risk_factors_input(PatientName, RiskFactorsInput).
 
 % Display the list of risk factor options to the user
 display_risk_factors :-
-    writeln('Select all that apply separated by commas:'),
-    writeln('1. Age above 70'),
-    writeln('2. Hypertension'),
-    writeln('3. Diabetes'),
-    writeln('4. Cardiovascular disease'),
-    writeln('5. Chronic respiratory disease'),
-    writeln('6. Cancer'),
-    writeln('7. Male').
+    writeln('Select all that apply separated by commas e.g., age_above_70, hypertension):'),
+    findall(Factor, risk_factor(Factor), FactorsList),
+    print_factor_list(FactorsList, 1).
+
+% Print a list of risk factors with indices
+print_factor_list([], _).
+print_factor_list([Factor | Rest], Index) :-
+    format('~d. ~w~n', [Index, Factor]),
+    NextIndex is Index + 1,
+    print_factor_list(Rest, NextIndex).
 
 % Process the input for risk factors
 process_risk_factors_input(PatientName, RiskFactorsInput) :-
@@ -174,13 +173,14 @@ ask_age_and_gender(PatientName) :-
     atom_number(AgeInput, Age),
     writeln('Please enter the patient\'s gender (male/female):'),
     read_line_to_string(user_input, Gender),
-    ask_recent_travel(PatientName, [Age, Gender]).
+    assertz(has_age_gender(PatientName, Age, Gender)),
+    ask_recent_travel(PatientName).
 
 % Define a predicate to ask about recent travel
-ask_recent_travel(PatientName, BioData) :-
+ask_recent_travel(PatientName) :-
     writeln('Does the patient have a recent travel history? (yes/no)'),
     read_line_to_string(user_input, RecentTravel),
-    diagnose_and_recommend(PatientName, BioData, RecentTravel).
+    diagnose_and_recommend(PatientName, RecentTravel).
 
 % Define a predicate to calculate severity based on symptoms
 severity(SymptomsList, Severity) :-
@@ -210,65 +210,59 @@ moderate_symptom(Symptom) :-
 mild_symptom(Symptom) :-
     symptom(Symptom, mild).
 
-% Updated determine_severity predicate
-determine_severity(1, _, _, severe) :- !.   % If there is exactly 1 severe symptom, treat as severe.
-determine_severity(_, _, 3, severe) :- !.   % If there are 3 or more mild symptoms, treat as severe.
-determine_severity(_, 1, _, moderate) :- !. % If there is exactly 1 moderate symptom, treat as moderate.
-determine_severity(_, _, _, mild).          % Otherwise, treat as mild.
+% Define a predicate to determine severity based on symptoms
+determine_severity(SevereCount, ModerateCount, MildCount, Severity) :-
+    (SevereCount = 1 -> Severity = severe ; Severity = none),
+    (ModerateCount = 1 -> Severity = moderate ; true),
+    (MildCount >= 3 -> Severity = severe ; true).
 
 % Define a predicate to determine recovery and hospitalization recommendations
-recovery_and_hospitalization(Severity, Age, RiskFactorsList) :-
-    (   Severity = severe,
-        (   member(age_above_70, RiskFactorsList)
-        ;   member(hypertension, RiskFactorsList)
-        ;   member(cardiovascular_disease, RiskFactorsList)
-        ),
-        Age >= 60
-    ->  writeln('Recommend hospitalization and immediate medical attention.')
-    ;   Severity = moderate
-    ->  writeln('Recommend medical advice and monitoring at home.')
-    ;   Severity = mild
-    ->  writeln('Recommend home isolation and monitoring.')
-    ;   writeln('Recommend regular monitoring and follow medical guidance.')
-    ).
+recovery_and_hospitalization(Severity, Age, RiskFactorsList, Recommendations) :-
+    (Severity = severe, (member(age_above_70, RiskFactorsList); member(hypertension, RiskFactorsList); member(cardiovascular_disease, RiskFactorsList)), Age >= 60) ->
+        Recommendations = 'Recommend hospitalization and immediate medical attention.'
+    ;
+    (Severity = moderate) ->
+        Recommendations = 'Recommend medical advice and monitoring at home.'
+    ;
+    (Severity = mild) ->
+        Recommendations = 'Recommend home isolation and monitoring.'
+    ;
+    Recommendations = 'Recommend regular monitoring and follow medical guidance.'.
 
 % Define a predicate to diagnose and recommend based on patient data
-diagnose_and_recommend(PatientName, BioData, RecentTravel) :-
+diagnose_and_recommend(PatientName, RecentTravel) :-
     % Get symptoms and risk factors for the patient
     has_symptoms(PatientName, SymptomsList),
     has_risk_factors(PatientName, RiskFactorsList),
+    has_age_gender(PatientName, Age, Gender),
 
     % Calculate severity based on symptoms
     severity(SymptomsList, Severity),
 
-    % Process age, gender, and risk factors for recovery and hospitalization recommendations
-    process_bio_data(PatientName, BioData, Age),
-
-    % Determine diagnosis message based on severity and contact history
-    diagnosis_message(PatientName, SymptomsList, Severity, RecentTravel).
-
-% Define a predicate to process bio data for the patient (e.g., age, gender)
-process_bio_data(PatientName, _, Age) :-
-    % Example: Extract age from BioData (replace with actual data retrieval)
-    extract_age(PatientName, Age).
+    % Determine diagnosis message based on severity and recent travel history
+    diagnosis_message(PatientName, SymptomsList, Severity, RecentTravel, Age, RiskFactorsList).
 
 % Define diagnosis message for mild severity
-diagnosis_message(_, _, mild, _) :-
+diagnosis_message(_, _, mild, _, _, _) :-
     writeln('The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
 
 % Define diagnosis message for moderate severity
-diagnosis_message(_, _, moderate, _) :-
+diagnosis_message(_, _, moderate, _, _, _) :-
     writeln('The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
 
 % Define diagnosis message for severe severity
-diagnosis_message(_, _, severe, _) :-
+diagnosis_message(_, _, severe, _, _, _) :-
     writeln('The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.').
 
 % Default diagnosis message (if none of the above conditions match)
-diagnosis_message(_, _, _) :-
+diagnosis_message(_, _, _, yes, Age, RiskFactorsList) :-
+    recovery_and_hospitalization(severe, Age, RiskFactorsList, Recommendations),
+    writeln(Recommendations).
+
+diagnosis_message(_, _, _, no, _, _) :-
     writeln('The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
 
-% Define predicates to add and retract symptoms and risk factors for a patient
+% Define predicates to add and retract symptoms, risk factors, and age_gender for a patient
 add_symptoms(PatientName, SymptomsList) :-
     assertz(has_symptoms(PatientName, SymptomsList)).
 
