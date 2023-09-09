@@ -73,7 +73,6 @@ ask_patient_questions(PatientName) :-
     read_line_to_string(user_input, Response),
     (Response = 'yes' ->
         ask_symptoms(PatientName)
-        ask_risk_factors(PatientName, ContactHistory)
     ;   ask_contact_history(PatientName)
     ).
 
