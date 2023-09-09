@@ -269,11 +269,16 @@ diagnosis_message(_, _, mild, _, _, 'The patient may have a mild virus infection
 % Define diagnosis message for moderate severity
 diagnosis_message(_, _, moderate, _, _, 'The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
 
-% Define diagnosis message for severe severity
-diagnosis_message(_, _, severe, _, _, 'The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.').
-
 % Default diagnosis message (if none of the above conditions match)
 diagnosis_message(_, _, _, _, _, 'The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
+
+% Define diagnosis message for severe severity and relevant risk factors
+diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.') :-
+    (   member(age_above_70, ContactHistory)
+    ;   member(hypertension, ContactHistory)
+    ;   member(cardiovascular_disease, ContactHistory)
+    ),
+    !.
 
 % Run the interactive diagnosis program
 % :- start_diagnosis.
