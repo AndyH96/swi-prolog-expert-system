@@ -73,6 +73,7 @@ ask_patient_questions(PatientName) :-
     read_line_to_string(user_input, Response),
     (Response = 'yes' ->
         ask_symptoms(PatientName)
+        ask_risk_factors(PatientName, ContactHistory)
     ;   ask_contact_history(PatientName)
     ).
 
@@ -86,7 +87,8 @@ ask_symptoms(PatientName, ContactHistory) :-
     writeln('What are the patient\'s symptoms?'),
     display_symptom_options,
     read_line_to_string(user_input, SymptomsInput),
-    process_symptoms_input(PatientName, ContactHistory, SymptomsInput).
+    process_symptoms_input(PatientName, ContactHistory, SymptomsInput),
+    ask_risk_factors(PatientName, ContactHistory).
 
 % Display the list of symptom options to the user
 display_symptom_options :-
@@ -271,6 +273,9 @@ diagnosis_message(_, _, moderate, _, _, 'The patient may have a moderate virus i
 
 % Default diagnosis message (if none of the above conditions match)
 diagnosis_message(_, _, _, _, _, 'The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
+
+% Define diagnosis message for the specific symptom combination
+diagnosis_message(_, [fever, dry_cough, tiredness, shortness_of_breath, chest_pain], _, _, _, 'The patient is displaying multiple severe symptoms. Seek immediate medical attention and follow medical guidance.').
 
 % Define diagnosis message for severe severity and relevant risk factors
 diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.') :-
