@@ -257,12 +257,10 @@ diagnose_and_recommend(PatientName, ContactHistory, BioData, RecentTravel) :-
     process_history(PatientName, RecentTravel, Severity, Age, RiskFactorsList),
 
     % Determine diagnosis message based on severity and contact history
-    diagnosis_message(PatientName, SymptomsList, Severity, ContactHistory, RecentTravel).
-
-% Define a predicate to process bio data for the patient (e.g., age, gender)
-process_bio_data(PatientName, _, Age) :-
-    % Example: Extract age from BioData (replace with actual data retrieval)
-    extract_age(PatientName, Age).
+    (member(fe, SymptomsList), member(dc, SymptomsList), member(t, SymptomsList), member(sb, SymptomsList), member(cp, SymptomsList) ->
+        writeln('The patient is displaying multiple severe symptoms. Seek immediate medical attention and follow medical guidance.')
+    ; diagnosis_message(PatientName, SymptomsList, Severity, ContactHistory, RecentTravel)
+    ).
 
 % Define diagnosis message for mild severity
 diagnosis_message(_, _, mild, _, _, 'The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
@@ -272,9 +270,6 @@ diagnosis_message(_, _, moderate, _, _, 'The patient may have a moderate virus i
 
 % Default diagnosis message (if none of the above conditions match)
 diagnosis_message(_, _, _, _, _, 'The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
-
-% Define diagnosis message for the specific symptom combination
-diagnosis_message(_, [fever, dry_cough, tiredness, shortness_of_breath, chest_pain], _, _, _, 'The patient is displaying multiple severe symptoms. Seek immediate medical attention and follow medical guidance.').
 
 % Define diagnosis message for severe severity and relevant risk factors
 diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.') :-
@@ -286,3 +281,4 @@ diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk 
 
 % Run the interactive diagnosis program
 % :- start_diagnosis.
+
