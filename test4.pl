@@ -1,4 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Knowledge Base %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Define facts about symptoms and risk factors
 symptom(fever, mild).
 symptom(dry_cough, mild).
@@ -40,25 +41,25 @@ incubation_period_range(1, 14).
 % Dynamic Facts for Patient Data
 :- dynamic has_symptoms/2, has_risk_factors/2.
 
-% Example: Extract age from BioData (assumed)
+% Example: Extract age from patients
 extract_age(john, 75).
 extract_age(alice, 28).
 extract_age(bob, 62).
 extract_age(carol, 35).
 
-% Define facts about symptoms for each patient
+% Example: Define facts about symptoms for each patient
 has_symptoms(john, [fever, dry_cough, tiredness, shortness_of_breath, chest_pain]).
 has_symptoms(alice, [fever, dry_cough, sore_throat]).
 has_symptoms(bob, [anosmia]).
 has_symptoms(carol, [asymptomatic]).
 
-% Define facts about risk factors for each patient
+% Example: Define facts about risk factors for each patient
 has_risk_factors(john, [age_above_70, hypertension, cardiovascular_disease, male]).
 has_risk_factors(alice, [diabetes, cancer]).
 has_risk_factors(bob, [male]).
 has_risk_factors(carol, [chronic_respiratory_disease]).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Diagnosis Code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Diagnosis Code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define a predicate to start the diagnosis
 start_diagnosis :-
@@ -117,14 +118,6 @@ process_symptoms_input(PatientName, ContactHistory, SymptomsInput) :-
     downcase_atom(SymptomsInput, LowercaseSymptomsInput),
     split_string(LowercaseSymptomsInput, ",", " ", SymptomsList),
 
-    writeln('Debug: SymptomsList: '), writeln(SymptomsList),  % Debugging line
-
-    remove_symptoms(PatientName),  % Remove previous symptoms if any
-
-    writeln('Debug: Removed previous symptoms'),  % Debugging line
-
-    process_symptoms(PatientName, ContactHistory, SymptomsList).
-
 % Define a predicate to process symptoms
 process_symptoms(_, _, []) :- !.  % No more symptoms to process
 process_symptoms(PatientName, ContactHistory, [Symptom | Rest]) :-
@@ -134,7 +127,7 @@ process_symptoms(PatientName, ContactHistory, [Symptom | Rest]) :-
 
 process_symptoms(PatientName, ContactHistory, [_ | Rest]) :-
     writeln('Invalid symptom detected. Please enter valid symptoms.'),  % Invalid symptom, show a message
-    process_symptoms_input(PatientName, ContactHistory, Rest).  % Re-enter symptoms
+    process_symptoms_input(PatientName, ContactHistory, Rest).  
 
 % Define a predicate to ask for risk factors and process the input
 ask_risk_factors(PatientName, ContactHistory) :-
@@ -257,10 +250,12 @@ diagnose_and_recommend(PatientName, ContactHistory, BioData, RecentTravel) :-
     process_history(PatientName, RecentTravel, Severity, Age, RiskFactorsList),
 
     % Determine diagnosis message based on severity and contact history
-    (member(fe, SymptomsList), member(dc, SymptomsList), member(t, SymptomsList), member(sb, SymptomsList), member(cp, SymptomsList) ->
-        writeln('The patient is displaying multiple severe symptoms. Seek immediate medical attention and follow medical guidance.')
-    ; diagnosis_message(PatientName, SymptomsList, Severity, ContactHistory, RecentTravel)
-    ).
+    diagnosis_message(PatientName, SymptomsList, Severity, ContactHistory, RecentTravel).
+
+% Define a predicate to process bio data for the patient (e.g., age, gender)
+process_bio_data(PatientName, _, Age) :-
+    % Example: Extract age from BioData (replace with actual data retrieval)
+    extract_age(PatientName, Age).
 
 % Define diagnosis message for mild severity
 diagnosis_message(_, _, mild, _, _, 'The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
@@ -270,6 +265,9 @@ diagnosis_message(_, _, moderate, _, _, 'The patient may have a moderate virus i
 
 % Default diagnosis message (if none of the above conditions match)
 diagnosis_message(_, _, _, _, _, 'The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
+
+% Define diagnosis message for the specific symptom combination
+diagnosis_message(_, [fever, dry_cough, tiredness, shortness_of_breath, chest_pain], _, _, _, 'The patient is displaying multiple severe symptoms. Seek immediate medical attention and follow medical guidance.').
 
 % Define diagnosis message for severe severity and relevant risk factors
 diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.') :-
@@ -281,4 +279,3 @@ diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk 
 
 % Run the interactive diagnosis program
 % :- start_diagnosis.
-
