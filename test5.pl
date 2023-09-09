@@ -180,19 +180,19 @@ severity(SymptomsList, Severity) :-
     determine_severity(SevereCount, ModerateCount, Severity).
 
 % Define a predicate to count severe symptoms
-count_severe_symptoms(SymptomsList, Count) :-
+count_severe_symptoms(SymptomsList, SevereCount) :-
     include(severe_symptom, SymptomsList, SevereSymptoms),
-    length(SevereSymptoms, Count).
+    length(SevereSymptoms, SevereCount).
 
 % Define a predicate to count moderate symptoms
-count_moderate_symptoms(SymptomsList, Count) :-
+count_moderate_symptoms(SymptomsList, ModerateCount) :-
     include(moderate_symptom, SymptomsList, ModerateSymptoms),
-    length(ModerateSymptoms, Count).
+    length(ModerateSymptoms, ModerateCount).
 
 % Define a predicate to count mild symptoms
-count_mild_symptoms(SymptomsList, Count) :-
+count_mild_symptoms(SymptomsList, MildCount) :-
     include(mild_symptom, SymptomsList, MildSymptoms),
-    length(MildSymptoms, Count).
+    length(MildSymptoms, MildCount).
 
 % Define a predicate for severe symptoms
 severe_symptom(Symptom) :-
@@ -279,3 +279,4 @@ diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk 
 
 % Run the interactive diagnosis program
 % :- start_diagnosis.
+
