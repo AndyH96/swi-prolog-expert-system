@@ -59,6 +59,20 @@ has_risk_factors(carol, [chronic_respiratory_disease]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Diagnosis Code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Define a predicate to trim leading and trailing spaces from a string
+string_trim(String, Trimmed) :-
+    atom_codes(String, Codes),
+    trim_spaces(Codes, TrimmedCodes),
+    atom_codes(Trimmed, TrimmedCodes).
+
+% Define a predicate to trim spaces from the beginning of a list
+trim_spaces([], []).
+
+trim_spaces([32 | Rest], Trimmed) :-  % 32 is the ASCII code for space
+    trim_spaces(Rest, Trimmed).
+
+trim_spaces(Trimmed, Trimmed).
+
 % Define a predicate to start the diagnosis
 start_diagnosis :-
     writeln('Welcome to the Virus Infection Diagnosis System.'),
@@ -68,69 +82,79 @@ start_diagnosis :-
 
 % Define a predicate to ask a series of questions to the patient
 ask_patient_questions(PatientName) :-
-    writeln('Do you want to provide new information about the patient\'s symptoms and risk factors? (yes/no)'),
-    read_line_to_string(user_input, Response),
-    (Response = 'yes' ->
-        ask_symptoms(PatientName)
-    ;   ask_contact_history(PatientName)
-    ).
+    writeln('Please enter the patient\'s age:'),
+    read_line_to_string(user_input, AgeInput),
+    atom_number(AgeInput, Age),
+    writeln('Please enter the patient\'s gender (male/female):'),
+    read_line_to_string(user_input, Gender),
+    writeln('Does the patient have a recent travel history? (yes/no)'),
+    read_line_to_string(user_input, RecentTravel),
+    ask_contact_history(PatientName, [Age, Gender], RecentTravel).
 
-ask_contact_history(PatientName) :-
+ask_contact_history(PatientName, BioData, RecentTravel) :-
     writeln('Has the patient had close contact with an infected person in the last 14 days (within the typical incubation period)? (yes/no)'),
     read_line_to_string(user_input, ContactHistory),
-    ask_symptoms(PatientName, ContactHistory).
+    ask_symptoms(PatientName, BioData, RecentTravel, ContactHistory).
 
 % Define a predicate to ask for symptoms and process the input
-ask_symptoms(PatientName, ContactHistory) :-
+ask_symptoms(PatientName, BioData, RecentTravel, ContactHistory) :-
     writeln('What are the patient\'s symptoms?'),
     display_symptom_options,
     read_line_to_string(user_input, SymptomsInput),
-    process_symptoms(PatientName, ContactHistory, SymptomsInput),
-    ask_risk_factors(PatientName, ContactHistory).
+    process_symptoms(PatientName, BioData, RecentTravel, ContactHistory, SymptomsInput).
 
 % Display the list of symptom options to the user
 display_symptom_options :-
-    writeln('Select all that apply separated by commas:'),
-    writeln('1. Fever'),
-    writeln('2. Dry cough'),
-    writeln('3. Tiredness'),
-    writeln('4. Aches and pains'),
-    writeln('5. Sore throat'),
-    writeln('6. Diarrhea'),
-    writeln('7. Conjunctivitis'),
-    writeln('8. Headache'),
-    writeln('9. Anosmia'),
-    writeln('10. Shortness of breath'),
-    writeln('11. Chest pain'),
-    writeln('12. Loss of speech or movement'),
-    writeln('13. Asymptomatic').
+    writeln('Select all that apply separated by commas with no spaces:'),
+    writeln('- Fever'),
+    writeln('- Dry cough'),
+    writeln('- Tiredness'),
+    writeln('- Aches and pains'),
+    writeln('- Sore throat'),
+    writeln('- Diarrhea'),
+    writeln('- Conjunctivitis'),
+    writeln('- Headache'),
+    writeln('- Anosmia'),
+    writeln('- Shortness of breath'),
+    writeln('- Chest pain'),
+    writeln('- Loss of speech or movement'),
+    writeln('- Asymptomatic').
 
-% Define a predicate to remove symptoms for a patient
-remove_symptoms(PatientName) :-
-    retract(has_symptoms(PatientName, _)),
-    writeln('Previous symptoms have been removed.').
+% Define a predicate to process the input for symptoms
+process_symptoms(PatientName, BioData, RecentTravel, ContactHistory, SymptomsInput) :-
+    string_trim(SymptomsInput, TrimmedInput), % Trim spaces
+    atom_string(SymptomsAtom, TrimmedInput),
+    atomic_list_concat(SymptomsList, ',', SymptomsAtom),
+    process_symptoms_list(PatientName, BioData, RecentTravel, ContactHistory, SymptomsList),
+    ask_risk_factors(PatientName, BioData, RecentTravel, ContactHistory).
 
-% Process the input for symptoms
-process_symptoms(_, _, []) :- !.  % No more symptoms to process
-process_symptoms(PatientName, ContactHistory, [Symptom | Rest]) :-
-    symptom(Symptom, _),  % Check if the symptom is valid
-    assertz(has_symptoms(PatientName, [Symptom | Rest])),  % Add the symptom
-    process_symptoms(PatientName, ContactHistory, Rest).  % Process the rest of the symptoms
+% Define a predicate to process a list of symptoms
+process_symptoms_list(_, _, _, _, []) :- !.  % No more symptoms to process
+process_symptoms_list(PatientName, BioData, RecentTravel, ContactHistory, [Symptom | Rest]) :-
+    atom_trim(Symptom, TrimmedSymptom),  % Remove leading/trailing spaces
+    (symptom(TrimmedSymptom, _) ->
+        assertz(has_symptoms(PatientName, [TrimmedSymptom | Rest])),
+        process_symptoms_list(PatientName, BioData, RecentTravel, ContactHistory, Rest)
+    ;   writeln('Invalid symptom detected. Please enter valid symptoms.'),  % Invalid symptom, show a message
+        ask_symptoms(PatientName, BioData, RecentTravel, ContactHistory)
+    ).
 
-process_symptoms(PatientName, ContactHistory, [_ | Rest]) :-
-    writeln('Invalid symptom detected. Please enter valid symptoms.'),  % Invalid symptom, show a message
-    process_symptoms_input(PatientName, ContactHistory, Rest).
+% Define a predicate to trim leading and trailing spaces from an atom
+atom_trim(Atom, Trimmed) :-
+    atom_string(Atom, String),
+    string_trim(String, TrimmedString),
+    atom_string(Trimmed, TrimmedString).
 
 % Define a predicate to ask for risk factors and process the input
-ask_risk_factors(PatientName, ContactHistory) :-
+ask_risk_factors(PatientName, BioData, RecentTravel, ContactHistory) :-
     writeln('Please enter the patient\'s risk factors:'),
     display_risk_factors,  % Display the list of risk factor options
     read_line_to_string(user_input, RiskFactorsInput),
-    process_risk_factors_input(PatientName, ContactHistory, RiskFactorsInput).
+    process_risk_factors_input(PatientName, BioData, RecentTravel, ContactHistory, RiskFactorsInput).
 
 % Display the list of risk factor options to the user
 display_risk_factors :-
-    writeln('Select all that apply, separated by commas(e.g., age_above_70, hypertension):'),
+    writeln('Select all that apply, separated by commas with no spaces (e.g., age_above_70,hypertension):'),
     writeln('1. Age above 70'),
     writeln('2. Hypertension'),
     writeln('3. Diabetes'),
@@ -140,13 +164,13 @@ display_risk_factors :-
     writeln('7. Male').
 
 % Process the input for risk factors
-process_risk_factors_input(PatientName, ContactHistory, RiskFactorsInput) :-
+process_risk_factors_input(PatientName, BioData, RecentTravel, ContactHistory, RiskFactorsInput) :-
     % Convert the input to lowercase and split
     downcase_atom(RiskFactorsInput, LowercaseRiskFactorsInput),
     split_string(LowercaseRiskFactorsInput, ",", " ", RiskFactorsList),
     remove_risk_factors(PatientName),  % Remove previous risk factors if any
     add_risk_factors(PatientName, RiskFactorsList),
-    ask_age_and_gender(PatientName, ContactHistory).
+    diagnose_and_recommend(PatientName, BioData, RecentTravel, ContactHistory).
 
 % Define predicates to append and retract risk factors for a patient
 add_risk_factors(PatientName, RiskFactorsList) :-
@@ -155,88 +179,8 @@ add_risk_factors(PatientName, RiskFactorsList) :-
 remove_risk_factors(PatientName) :-
     retract(has_risk_factors(PatientName, _)).
 
-% Define a predicate to ask for age and gender
-ask_age_and_gender(PatientName, ContactHistory) :-
-    writeln('Please enter the patient\'s age:'),
-    read_line_to_string(user_input, AgeInput),
-    atom_number(AgeInput, Age),
-    writeln('Please enter the patient\'s gender (male/female):'),
-    read_line_to_string(user_input, Gender),
-    ask_recent_travel(PatientName, ContactHistory, [Age, Gender]).
-
-% Define a predicate to ask about recent travel history
-ask_recent_travel(PatientName, ContactHistory, BioData) :-
-    writeln('Does the patient have a recent travel history? (yes/no)'),
-    read_line_to_string(user_input, RecentTravel),
-    diagnose_and_recommend(PatientName, ContactHistory, BioData, RecentTravel).
-
-% Define a predicate to calculate severity based on symptoms
-severity(SymptomsList, Severity) :-
-    count_severe_symptoms(SymptomsList, SevereCount),
-    count_moderate_symptoms(SymptomsList, ModerateCount),
-    count_mild_symptoms(SymptomsList, MildCount),
-    determine_severity(SevereCount, ModerateCount, MildCount, Severity).
-
-% Define a predicate to count severe symptoms
-count_severe_symptoms(SymptomsList, SevereCount) :-
-    include(severe_symptom, SymptomsList, SevereSymptoms),
-    length(SevereSymptoms, SevereCount).
-
-% Define a predicate to count moderate symptoms
-count_moderate_symptoms(SymptomsList, ModerateCount) :-
-    include(moderate_symptom, SymptomsList, ModerateSymptoms),
-    length(ModerateSymptoms, ModerateCount).
-
-% Define a predicate to count mild symptoms
-count_mild_symptoms(SymptomsList, MildCount) :-
-    include(mild_symptom, SymptomsList, MildSymptoms),
-    length(MildSymptoms, MildCount).
-
-% Define a predicate for severe symptoms
-severe_symptom(Symptom) :-
-    symptom(Symptom, severe).
-
-% Define a predicate for moderate symptoms
-moderate_symptom(Symptom) :-
-    symptom(Symptom, moderate).
-
-% Define a predicate for mild symptoms
-mild_symptom(Symptom) :-
-    symptom(Symptom, mild).
-
-% Define a predicate to determine severity based on symptoms
-determine_severity(SevereCount, ModerateCount, _, severe) :-
-    SevereCount > 0,
-    !.
-
-determine_severity(_, ModerateCount, _, moderate) :-
-    ModerateCount > 0,
-    !.
-
-determine_severity(_, _, MildCount, mild) :-
-    MildCount > 0,
-    !.
-
-determine_severity(_, _, _, none).
-
-% Define a predicate to determine recovery and hospitalization recommendations
-recovery_and_hospitalization(Severity, Age, RiskFactorsList, Recommendation) :-
-    (   Severity = severe,
-        (   member(age_above_70, RiskFactorsList)
-        ;   member(hypertension, RiskFactorsList)
-        ;   member(cardiovascular_disease, RiskFactorsList)
-        ),
-        Age >= 60
-    ->  Recommendation = 'Recommend hospitalization and immediate medical attention.'
-    ;   Severity = moderate
-    ->  Recommendation = 'Recommend medical advice and monitoring at home.'
-    ;   Severity = mild
-    ->  Recommendation = 'Recommend home isolation and monitoring.'
-    ;   Recommendation = 'Recommend regular monitoring and follow medical guidance.'
-    ).
-
 % Define a predicate to diagnose and recommend based on patient data
-diagnose_and_recommend(PatientName, ContactHistory, BioData, RecentTravel) :-
+diagnose_and_recommend(PatientName, BioData, RecentTravel, ContactHistory) :-
     % Get symptoms and risk factors for the patient
     has_symptoms(PatientName, SymptomsList),
     has_risk_factors(PatientName, RiskFactorsList),
@@ -252,7 +196,7 @@ diagnose_and_recommend(PatientName, ContactHistory, BioData, RecentTravel) :-
     diagnosis_message(PatientName, SymptomsList, Severity, ContactHistory, RecentTravel).
 
 % Define a predicate to process bio data for the patient (e.g., age, gender)
-process_bio_data(PatientName, _, Age) :-
+process_bio_data(PatientName, BioData, Age) :-
     % Example: Extract age from BioData (replace with actual data retrieval)
     extract_age(PatientName, Age).
 
@@ -278,3 +222,5 @@ diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk 
 
 % Run the interactive diagnosis program
 % :- start_diagnosis.
+
+

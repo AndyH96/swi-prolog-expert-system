@@ -59,6 +59,20 @@ has_risk_factors(carol, [chronic_respiratory_disease]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Diagnosis Code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Define a predicate to trim leading and trailing spaces from a string
+string_trim(String, Trimmed) :-
+    atom_codes(String, Codes),
+    trim_spaces(Codes, TrimmedCodes),
+    atom_codes(Trimmed, TrimmedCodes).
+
+% Define a predicate to trim spaces from the beginning of a list
+trim_spaces([], []).
+
+trim_spaces([32 | Rest], Trimmed) :-  % 32 is the ASCII code for space
+    trim_spaces(Rest, Trimmed).
+
+trim_spaces(Trimmed, Trimmed).
+
 % Define a predicate to start the diagnosis
 start_diagnosis :-
     writeln('Welcome to the Virus Infection Diagnosis System.'),
@@ -90,36 +104,44 @@ ask_symptoms(PatientName, ContactHistory) :-
 
 % Display the list of symptom options to the user
 display_symptom_options :-
-    writeln('Select all that apply separated by commas:'),
-    writeln('1. Fever'),
-    writeln('2. Dry cough'),
-    writeln('3. Tiredness'),
-    writeln('4. Aches and pains'),
-    writeln('5. Sore throat'),
-    writeln('6. Diarrhea'),
-    writeln('7. Conjunctivitis'),
-    writeln('8. Headache'),
-    writeln('9. Anosmia'),
-    writeln('10. Shortness of breath'),
-    writeln('11. Chest pain'),
-    writeln('12. Loss of speech or movement'),
-    writeln('13. Asymptomatic').
+    writeln('Select all that apply separated by commas with no spaces:'),
+    writeln('- Fever'),
+    writeln('- Dry cough'),
+    writeln('- Tiredness'),
+    writeln('- Aches and pains'),
+    writeln('- Sore throat'),
+    writeln('- Diarrhea'),
+    writeln('- Conjunctivitis'),
+    writeln('- Headache'),
+    writeln('- Anosmia'),
+    writeln('- Shortness of breath'),
+    writeln('- Chest pain'),
+    writeln('- Loss of speech or movement'),
+    writeln('- Asymptomatic').
 
-% Define a predicate to remove symptoms for a patient
-remove_symptoms(PatientName) :-
-    retract(has_symptoms(PatientName, _)),
-    writeln('Previous symptoms have been removed.').
+% Define a predicate to process the input for symptoms
+process_symptoms(PatientName, ContactHistory, SymptomsInput) :-
+    atom_string(SymptomsAtom, SymptomsInput),
+    atomic_list_concat(SymptomsList, ',', SymptomsAtom),
+    process_symptoms_list(PatientName, ContactHistory, SymptomsList),
+    ask_risk_factors(PatientName, ContactHistory).
 
-% Process the input for symptoms
-process_symptoms(_, _, []) :- !.  % No more symptoms to process
-process_symptoms(PatientName, ContactHistory, [Symptom | Rest]) :-
-    symptom(Symptom, _),  % Check if the symptom is valid
-    assertz(has_symptoms(PatientName, [Symptom | Rest])),  % Add the symptom
-    process_symptoms(PatientName, ContactHistory, Rest).  % Process the rest of the symptoms
+% Define a predicate to process a list of symptoms
+process_symptoms_list(_, _, []) :- !.  % No more symptoms to process
+process_symptoms_list(PatientName, ContactHistory, [Symptom | Rest]) :-
+    atom_trim(Symptom, TrimmedSymptom),  % Remove leading/trailing spaces
+    (symptom(TrimmedSymptom, _) ->
+        assertz(has_symptoms(PatientName, [TrimmedSymptom | Rest])),
+        process_symptoms_list(PatientName, ContactHistory, Rest)
+    ;   writeln('Invalid symptom detected. Please enter valid symptoms.'),  % Invalid symptom, show a message
+        ask_symptoms(PatientName, ContactHistory)
+    ).
 
-process_symptoms(PatientName, ContactHistory, [_ | Rest]) :-
-    writeln('Invalid symptom detected. Please enter valid symptoms.'),  % Invalid symptom, show a message
-    process_symptoms_input(PatientName, ContactHistory, Rest).
+% Define a predicate to trim leading and trailing spaces from an atom
+atom_trim(Atom, Trimmed) :-
+    atom_string(Atom, String),
+    string_trim(String, TrimmedString),
+    atom_string(Trimmed, TrimmedString).
 
 % Define a predicate to ask for risk factors and process the input
 ask_risk_factors(PatientName, ContactHistory) :-
@@ -130,7 +152,7 @@ ask_risk_factors(PatientName, ContactHistory) :-
 
 % Display the list of risk factor options to the user
 display_risk_factors :-
-    writeln('Select all that apply, separated by commas(e.g., age_above_70, hypertension):'),
+    writeln('Select all that apply, separated by commas with no spaces (e.g., age_above_70,hypertension):'),
     writeln('1. Age above 70'),
     writeln('2. Hypertension'),
     writeln('3. Diabetes'),
@@ -278,3 +300,4 @@ diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk 
 
 % Run the interactive diagnosis program
 % :- start_diagnosis.
+
