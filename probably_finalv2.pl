@@ -72,17 +72,9 @@ ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList) :
     writeln('Please enter the patient\'s age:'),
     read_line_to_string(user_input, AgeInput),
     atom_number(AgeInput, Age),
-    (validate_age(Age) ->
-        writeln('Please enter the patient\'s gender (male/female):'),
-        read_line_to_string(user_input, Gender),
-        (validate_gender(Gender) ->
-            ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, [Age, Gender]);
-            writeln('Invalid gender input. Please enter either "male" or "female".'),
-            ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList)
-        );
-        writeln('Invalid age input. Please enter a valid age.'),
-        ask_age_and_gender(PatientName, ContactHistory, SymptomsList, RiskFactorsList)
-    ).
+    writeln('Please enter the patient\'s gender (male/female):'),
+    read_line_to_string(user_input, Gender),
+    ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, [Age, Gender]).
 
 ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, BioData) :-
     writeln('Does the patient have a recent travel history? (yes/no)'),
@@ -93,7 +85,8 @@ ask_recent_travel(PatientName, ContactHistory, SymptomsList, RiskFactorsList, Bi
 severity(SymptomsList, Severity) :-
     count_severe_symptoms(SymptomsList, SevereCount),
     count_moderate_symptoms(SymptomsList, ModerateCount),
-    determine_severity(SevereCount, ModerateCount, Severity).
+    count_mild_symptoms(SymptomsList, MildCount),
+    determine_severity(SevereCount, ModerateCount, MildCount, Severity).
 
 count_severe_symptoms(SymptomsList, Count) :-
     include(severe_symptom, SymptomsList, SevereSymptoms),
@@ -103,29 +96,44 @@ count_moderate_symptoms(SymptomsList, Count) :-
     include(moderate_symptom, SymptomsList, ModerateSymptoms),
     length(ModerateSymptoms, Count).
 
+count_mild_symptoms(SymptomsList, Count) :-
+    include(mild_symptom, SymptomsList, MildSymptoms),
+    length(MildSymptoms, Count).
+
 severe_symptom(Symptom) :-
     symptom(Symptom, severe).
 
 moderate_symptom(Symptom) :-
     symptom(Symptom, moderate).
 
-determine_severity(SevereCount, _, severe) :-
-    SevereCount >= 1.  % Adjust the criteria for severe symptoms.
-determine_severity(_, ModerateCount, moderate) :-
-    ModerateCount >= 1.  % Adjust the criteria for moderate symptoms.
-determine_severity(_, _, mild).
+mild_symptom(Symptom) :-
+    symptom(Symptom, mild).
+
+% Define a predicate to determine severity based on symptoms
+determine_severity(SevereCount, _, 1, mild) :-
+    SevereCount = 0, !.  % If there is exactly 1 mild symptom and no severe symptoms, treat as mild.
+determine_severity(SevereCount, _, MildCount, mild) :-
+    SevereCount = 0,     % If there are no severe symptoms and not 3+ mild symptoms, treat as mild.
+    MildCount >= 1, !.
+determine_severity(SevereCount, _, MildCount, severe) :-
+    SevereCount >= 1.    % If there is at least one severe symptom, treat as severe.
+determine_severity(_, _, MildCount, severe) :-
+    MildCount >= 3.      % If at least 3 mild symptoms are present, treat as severe.
+determine_severity(_, ModerateCount, _, moderate) :-
+    ModerateCount >= 1.  % Define your criteria for moderate symptoms.
+determine_severity(_, _, _, mild).
 
 % Define a predicate to diagnose and recommend based on patient data
 diagnose_and_recommend(PatientName, SymptomsList, RiskFactorsList, BioData, RecentTravel) :-
     % Calculate severity based on symptoms
     severity(SymptomsList, Severity),
 
-    % Determine diagnosis message based on severity and contact history
-    diagnosis_message(PatientName, SymptomsList, Severity, RecentTravel),
-
     % Process age, gender, and risk factors for recovery and hospitalization recommendations
     process_bio_data(PatientName, BioData, Age),
-    process_history(PatientName, RecentTravel, Severity, Age, RiskFactorsList).
+    process_history(PatientName, RecentTravel, Severity, Age, RiskFactorsList),
+
+    % Determine diagnosis message based on severity and contact history
+    diagnosis_message(PatientName, SymptomsList, Severity, RecentTravel).
 
 % Define a predicate to process bio data for the patient (e.g., age, gender)
 process_bio_data(PatientName, _, Age) :-
@@ -162,32 +170,22 @@ has_risk_factors(alice, [diabetes, cancer]).
 has_risk_factors(bob, [hypertension, cardiovascular_disease, male]).
 has_risk_factors(carol, [chronic_respiratory_disease]).
 
-% Define rules for recovery and hospitalization
-recovery_and_hospitalization(severe, Age, RiskFactorsList) :-
-    (member(age_above_70, RiskFactorsList); (member(male, RiskFactorsList), member([hypertension, diabetes, cardiovascular_disease, chronic_respiratory_disease, cancer], RiskFactorsList))),
-    write('The patient with severe symptoms, advanced age, or pre-existing health conditions should seek immediate medical attention and hospitalization.').
-recovery_and_hospitalization(moderate, Age, RiskFactorsList) :-
-    (member(age_above_70, RiskFactorsList); (member(male, RiskFactorsList), member([hypertension, diabetes, cardiovascular_disease, chronic_respiratory_disease, cancer], RiskFactorsList))),
-    write('The patient with moderate symptoms, advanced age, or pre-existing health conditions may require hospitalization depending on their condition. Consult a medical professional.').
-recovery_and_hospitalization(_, Age, _) :-
-    Age >= 70,
-    write('Patients above 70 years old should consult a doctor even for mild symptoms.').
-recovery_and_hospitalization(_, _, Gender) :-
-    Gender == male,
-    write('Male patients with symptoms and recent travel history should consult a doctor.').
-recovery_and_hospitalization(_, _, _) :-
-    write('Patients with mild symptoms can recover at home. Get plenty of rest, stay hydrated, and consult a doctor if symptoms worsen or persist.').
+% Diagnosis message for mild severity
+diagnosis_message(_, _, mild, _) :-
+    write('The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
 
-% Define predicates for age and gender validation
-validate_age(Age) :-
-    Age >= 0,
-    Age < 150.
+% Diagnosis message for moderate severity
+diagnosis_message(_, _, moderate, _) :-
+    write('The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
 
-validate_gender(Gender) :-
-    member(Gender, [male, female]).
+% Diagnosis message for severe severity
+diagnosis_message(_, _, severe, _) :-
+    write('The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.').
+
+% Default diagnosis message (if none of the above conditions match)
+diagnosis_message(_, _, _, _) :-
+    write('The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
+
 % Run the interactive diagnosis program
 :- dynamic has_symptoms/2, has_risk_factors/2. % To allow dynamic facts
 start_diagnosis.
-
-
-
