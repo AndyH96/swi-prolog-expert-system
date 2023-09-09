@@ -105,14 +105,35 @@ display_symptom_options :-
     writeln('12. Loss of speech or movement'),
     writeln('13. Asymptomatic').
 
+% Define a predicate to remove symptoms for a patient
+remove_symptoms(PatientName) :-
+    retract(has_symptoms(PatientName, _)),
+    writeln('Previous symptoms have been removed.').
+
 % Process the input for symptoms
 process_symptoms_input(PatientName, ContactHistory, SymptomsInput) :-
     % Convert the input to lowercase and split
     downcase_atom(SymptomsInput, LowercaseSymptomsInput),
     split_string(LowercaseSymptomsInput, ",", " ", SymptomsList),
+
+    writeln('Debug: SymptomsList: '), writeln(SymptomsList),  % Debugging line
+
     remove_symptoms(PatientName),  % Remove previous symptoms if any
-    add_symptoms(PatientName, SymptomsList),
-    ask_risk_factors(PatientName, ContactHistory).
+
+    writeln('Debug: Removed previous symptoms'),  % Debugging line
+
+    process_symptoms(PatientName, ContactHistory, SymptomsList).
+
+% Define a predicate to process symptoms
+process_symptoms(_, _, []) :- !.  % No more symptoms to process
+process_symptoms(PatientName, ContactHistory, [Symptom | Rest]) :-
+    symptom(Symptom, _),  % Check if the symptom is valid
+    assertz(has_symptoms(PatientName, [Symptom | Rest])),  % Add the symptom
+    process_symptoms(PatientName, ContactHistory, Rest).  % Process the rest of the symptoms
+
+process_symptoms(PatientName, ContactHistory, [_ | Rest]) :-
+    writeln('Invalid symptom detected. Please enter valid symptoms.'),  % Invalid symptom, show a message
+    process_symptoms_input(PatientName, ContactHistory, Rest).  % Re-enter symptoms
 
 % Define a predicate to ask for risk factors and process the input
 ask_risk_factors(PatientName, ContactHistory) :-
@@ -137,7 +158,8 @@ process_risk_factors_input(PatientName, ContactHistory, RiskFactorsInput) :-
     % Convert the input to lowercase and split
     downcase_atom(RiskFactorsInput, LowercaseRiskFactorsInput),
     split_string(LowercaseRiskFactorsInput, ",", " ", RiskFactorsList),
-    append_existing_risk_factors(PatientName, RiskFactorsList),  % Append new risk factors to existing ones
+    remove_risk_factors(PatientName),  % Remove previous risk factors if any
+    add_risk_factors(PatientName, RiskFactorsList),
     ask_age_and_gender(PatientName, ContactHistory).
 
 % Define predicates to append and retract risk factors for a patient
