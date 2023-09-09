@@ -1,4 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Knowledge Base %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Define facts about symptoms and risk factors
 symptom(fever, mild).
 symptom(dry_cough, mild).
@@ -248,27 +249,6 @@ diagnose_and_recommend(PatientName, ContactHistory, BioData, RecentTravel) :-
     % Determine diagnosis message based on severity and contact history
     diagnosis_message(PatientName, SymptomsList, Severity, ContactHistory, RecentTravel).
 
-% Define a predicate to process bio data for the patient (e.g., age, gender)
-process_bio_data(PatientName, _, Age) :-
-    % Example: Extract age from BioData (replace with actual data retrieval)
-    extract_age(PatientName, Age).
-
-% Define diagnosis message for mild severity
-diagnosis_message(_, _, mild, _, _) :-
-    writeln('The patient may have a mild virus infection. Continue monitoring symptoms and follow medical guidance.').
-
-% Define diagnosis message for moderate severity
-diagnosis_message(_, _, moderate, _, _) :-
-    writeln('The patient may have a moderate virus infection. Seek medical advice and follow medical guidance.').
-
-% Define diagnosis message for severe severity
-diagnosis_message(_, _, severe, _, _) :-
-    writeln('The patient is at high risk of having a severe virus infection. Seek immediate medical attention and follow medical guidance.').
-
-% Default diagnosis message (if none of the above conditions match)
-diagnosis_message(_, _, _, _, _) :-
-    writeln('The patient is less likely to have the virus infection. Continue monitoring symptoms and follow medical guidance.').
-
 % Define predicates to add and retract symptoms and risk factors for a patient
 add_symptoms(PatientName, SymptomsList) :-
     assertz(has_symptoms(PatientName, SymptomsList)).
@@ -282,6 +262,6 @@ add_risk_factors(PatientName, RiskFactorsList) :-
 remove_risk_factors(PatientName) :-
     retract(has_risk_factors(PatientName, _)).
 
-% Run the interactive diagnosis program (I found issues running on SWI-Prolog on MacOS through the environment if start_diagnosis was not commented out)
+% Run the interactive diagnosis program
 % :- start_diagnosis.
 
