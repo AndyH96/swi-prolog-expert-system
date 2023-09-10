@@ -200,6 +200,4 @@ recommend_diagnosis(TotalPoints, RiskFactors) :-
 calculate_points(PatientName, Age, Gender, ContactHistory, TotalPoints),
 recommend_diagnosis(TotalPoints, RiskFactors).
 
-
-
 % :- start_diagnosis.
