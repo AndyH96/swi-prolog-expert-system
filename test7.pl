@@ -86,21 +86,31 @@ ask_patient_questions(PatientName) :-
     read_line_to_string(user_input, Response),
     (Response = 'yes' ->
         ask_symptoms(PatientName)
-    ;   ask_contact_history(PatientName)
+    ;   ask_age_and_gender(PatientName)
     ).
 
-ask_contact_history(PatientName) :-
-    writeln('Has the patient had close contact with an infected person in the last 14 days (within the typical incubation period)? (yes/no)'),
-    read_line_to_string(user_input, ContactHistory),
-    ask_symptoms(PatientName, ContactHistory).
+% Define a predicate to ask for age and gender
+ask_age_and_gender(PatientName) :-
+    writeln('Please enter the patient\'s age:'),
+    read_line_to_string(user_input, AgeInput),
+    atom_number(AgeInput, Age),
+    writeln('Please enter the patient\'s gender (male/female):'),
+    read_line_to_string(user_input, Gender),
+    ask_recent_travel(PatientName, [Age, Gender]).
+
+% Define a predicate to ask about recent travel history
+ask_recent_travel(PatientName, BioData) :-
+    writeln('Does the patient have a recent travel history? (yes/no)'),
+    read_line_to_string(user_input, RecentTravel),
+    ask_symptoms(PatientName, BioData, RecentTravel).
 
 % Define a predicate to ask for symptoms and process the input
-ask_symptoms(PatientName, ContactHistory) :-
+ask_symptoms(PatientName, BioData, RecentTravel) :-
     writeln('What are the patient\'s symptoms?'),
     display_symptom_options,
     read_line_to_string(user_input, SymptomsInput),
-    process_symptoms(PatientName, ContactHistory, SymptomsInput),
-    ask_risk_factors(PatientName, ContactHistory).
+    process_symptoms(PatientName, BioData, RecentTravel, SymptomsInput),
+    ask_risk_factors(PatientName, BioData, RecentTravel).
 
 % Display the list of symptom options to the user
 display_symptom_options :-
@@ -176,21 +186,6 @@ add_risk_factors(PatientName, RiskFactorsList) :-
 
 remove_risk_factors(PatientName) :-
     retract(has_risk_factors(PatientName, _)).
-
-% Define a predicate to ask for age and gender
-ask_age_and_gender(PatientName, ContactHistory) :-
-    writeln('Please enter the patient\'s age:'),
-    read_line_to_string(user_input, AgeInput),
-    atom_number(AgeInput, Age),
-    writeln('Please enter the patient\'s gender (male/female):'),
-    read_line_to_string(user_input, Gender),
-    ask_recent_travel(PatientName, ContactHistory, [Age, Gender]).
-
-% Define a predicate to ask about recent travel history
-ask_recent_travel(PatientName, ContactHistory, BioData) :-
-    writeln('Does the patient have a recent travel history? (yes/no)'),
-    read_line_to_string(user_input, RecentTravel),
-    diagnose_and_recommend(PatientName, ContactHistory, BioData, RecentTravel).
 
 % Define a predicate to calculate severity based on symptoms
 severity(SymptomsList, Severity) :-
@@ -300,5 +295,4 @@ diagnosis_message(_, _, severe, ContactHistory, _, 'The patient is at high risk 
 
 % Run the interactive diagnosis program
 % :- start_diagnosis.
-
 
