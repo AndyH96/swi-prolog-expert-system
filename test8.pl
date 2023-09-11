@@ -29,7 +29,7 @@ risk_factor(male).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Patient Diagnosis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% This portion of the code is dedicated to asking a series of questions to evaluate the patient's risk/diagnosis.
+% This portion of the code is dedicated to asking a series of questions to evaluate the patient risk/diagnosis.
 
 % Define a predicate to start the diagnosis
 start_diagnosis :-
@@ -41,7 +41,8 @@ start_diagnosis :-
 % Define a predicate to ask patient age
 ask_age(PatientName) :-
     writeln('Please enter the patient\'s age:'),
-    read_integer(Age),
+    read_line_to_string(user_input, AgeString),
+    atom_number(AgeString, Age), % Convert the input to an integer
     ask_gender(PatientName, Age).
 
 % Define a predicate to ask patient gender
@@ -56,8 +57,8 @@ ask_contact_history(PatientName, Age, Gender) :-
     read_line_to_string(user_input, ContactHistory),
     (ContactHistory = 'yes' ->
         writeln('Recommendation: Isolate at home and monitor your symptoms closely.'),
-        writeln('Action: If symptoms worsen, contact your healthcare provider immediately.');
-     ContactHistory = 'no' ->
+        writeln('Action: If symptoms worsen, contact your healthcare provider immediately.')
+    ;ContactHistory = 'no' ->
         ask_symptoms(PatientName, Age, Gender)
     ).
 
@@ -95,7 +96,7 @@ process_symptoms(PatientName, Age, Gender, SymptomsInput) :-
 % Define a predicate to assert symptoms for the patient
 assert_symptoms(_, []) :- !.
 assert_symptoms(PatientName, [Symptom | Rest]) :-
-    assert(has_symptoms(PatientName, Symptom)),
+    assert(has_symptoms(PatientName, Symptom)),% Stores the patient symptoms to later calculate
     assert_symptoms(PatientName, Rest).
 
 % Define a predicate to ask for risk factors and process the input
@@ -126,10 +127,10 @@ process_risk_factors_input(PatientName, Age, Gender, RiskFactorsInput) :-
 % Define a predicate to assert risk factors for the patient
 assert_risk_factors(_, []).
 assert_risk_factors(PatientName, [RiskFactor | Rest]) :-
-    assert(has_risk_factors(PatientName, RiskFactor)),
+    assert(has_risk_factors(PatientName, RiskFactor)), % Stores patient risk factors to later calculate
     assert_risk_factors(PatientName, Rest).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Diagnosis Calculation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Point System %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define rules for assigning points to symptoms
 symptom_points(fever, mild, 1).
@@ -155,13 +156,15 @@ risk_factor_points(chronic_respiratory_disease, 1).
 risk_factor_points(cancer, 1).
 risk_factor_points(male, 1).
 
-% Extra 0.5 points if they had close contact with an infected person
+% Define rules for assigning points to close contact
 close_contact_points(yes, 0.5).
 close_contact_points(no, 0).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Diagnosis Calculation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Calculate total points for symptoms
 calculate_symptom_points(PatientName, SymptomPoints) :-
-    findall(Points, (has_symptoms(PatientName, Symptoms), member(Symptom, Symptoms), symptom_points(Symptom, _, Points)), SymptomPointsList),
+    findall(Points, (has_symptoms(PatientName, Symptom), symptom_points(Symptom, _, Points)), SymptomPointsList),
     sum_list(SymptomPointsList, SymptomPoints).
 
 % Calculate total points for risk factors
@@ -174,8 +177,16 @@ calculate_risk_factor_points(PatientName, RiskFactorPoints) :-
 calculate_close_contact_points(ContactHistory, CloseContactPoints) :-
     close_contact_points(ContactHistory, CloseContactPoints).
 
+# % Calculate total points for symptoms, risk factors, and close contact
+# calculate_points(PatientName, Age, Gender) :-
+#     calculate_symptom_points(PatientName, SymptomPoints),
+#     calculate_risk_factor_points(PatientName, RiskFactorPoints),
+#     calculate_close_contact_points(ContactHistory, CloseContactPoints),
+#     TotalPoints is SymptomPoints + RiskFactorPoints + CloseContactPoints,
+#     recommend_diagnosis(TotalPoints).
+
 % Calculate total points for symptoms, risk factors, and close contact
-calculate_points(PatientName, Age, Gender) :-
+calculate_points(PatientName, Age, Gender, ContactHistory) :-
     calculate_symptom_points(PatientName, SymptomPoints),
     calculate_risk_factor_points(PatientName, RiskFactorPoints),
     calculate_close_contact_points(ContactHistory, CloseContactPoints),
@@ -201,11 +212,11 @@ recommend_diagnosis(TotalPoints) :-
         writeln('Recommendation: Manage your symptoms at home.'),
         writeln('Action: Get plenty of rest, stay hydrated, and monitor your condition.')
 
-    ; TotalPoints = 0 ->
-        ContactHistory = 'yes' ->
-        writeln('Diagnosis: Low Risk'),
-        writeln('Recommendation: You have had close contact with an infected person, but no symptoms or risk factors.'),
-        writeln('Action: Quarantine yourself and monitor for symptoms.')
+    # ; TotalPoints = 0 ->
+    #     ContactHistory = 'yes' ->
+    #     writeln('Diagnosis: Low Risk'),
+    #     writeln('Recommendation: You have had close contact with an infected person, but no symptoms or risk factors.'),
+    #     writeln('Action: Quarantine yourself and monitor for symptoms.')
 
     ; TotalPoints = 0 ->
         writeln('Diagnosis: None'),
@@ -213,10 +224,9 @@ recommend_diagnosis(TotalPoints) :-
         writeln('Action: Continue to practice good hygiene and social distancing to prevent the spread of the virus.')
 
     ),
-    % You can add additional recommendations or actions based on specific risk factors here.
-    % For example, if a patient has a certain risk factor, you can provide tailored advice.
-    % Remember to handle other cases or provide fallback recommendations as needed.
     !.
 
-% Entry point for the diagnosis
-:- start_diagnosis.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Starting the Program %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% You can start the program by typing 'start_diagnosis.' in SWI Prolog terminal.
+% :- start_diagnosis.
