@@ -1,0 +1,233 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Defining Knowledge Base %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define facts about symptoms and risk factors
+symptom(fever, mild).
+symptom(dry_cough, mild).
+symptom(tiredness, mild).
+symptom(aches_and_pains, mild).
+symptom(sore_throat, mild).
+symptom(diarrhea, mild).
+symptom(conjunctivitis, mild).
+symptom(headache, moderate).
+symptom(anosmia, moderate).
+symptom(shortness_of_breath, severe).
+symptom(chest_pain, severe).
+symptom(loss_of_speech_or_movement, severe).
+symptom(asymptomatic, none).
+
+% Define risk factors for severe symptoms
+risk_factor(age_above_70).
+risk_factor(hypertension).
+risk_factor(diabetes).
+risk_factor(cardiovascular_disease).
+risk_factor(chronic_respiratory_disease).
+risk_factor(cancer).
+risk_factor(male).
+
+% Dynamic Facts for Patient Data
+:- dynamic has_symptoms/2, has_risk_factors/2.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Interactive Patient Diagnosis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% This portion of the code is dedicated to asking a series of questions to evaluate the patient risk/diagnosis.
+
+% Define a predicate to start the diagnosis
+start_diagnosis :-
+    writeln('Welcome to the Virus Infection Diagnosis System.'),
+    writeln('Please enter the patient\'s name:'),
+    read_line_to_string(user_input, PatientName),
+    ask_age(PatientName).
+
+% Define a predicate to ask patient age
+ask_age(PatientName) :-
+    writeln('Please enter the patient\'s age:'),
+    read_line_to_string(user_input, AgeString),
+    atom_number(AgeString, Age), % Convert the input to an integer
+    ask_gender(PatientName, Age).
+
+% Define a predicate to ask patient gender
+ask_gender(PatientName, Age) :-
+    writeln('Please enter the patient\'s gender (male/female):'),
+    read_line_to_string(user_input, Gender),
+    ask_contact_history(PatientName, Age, Gender).
+
+% Define a predicate to ask about patient recent contact history
+ask_contact_history(PatientName, Age, Gender) :-
+    writeln('Has the patient had close contact with an infected person in the last 14 days (incubation period)? (yes/no)'),
+    read_line_to_string(user_input, ContactHistory),
+    (ContactHistory = 'yes' ->
+        writeln('Recommendation: Isolate at home and monitor your symptoms closely.'),
+        writeln('Action: If symptoms worsen, contact your healthcare provider immediately.')
+    ;ContactHistory = 'no' ->
+        ask_symptoms(PatientName, Age, Gender)
+    ).
+
+% Define a predicate to ask for symptoms and process the input
+ask_symptoms(PatientName, Age, Gender) :-
+    writeln('What are the patient\'s symptoms?'),
+    writeln('Select all that apply, separated by commas, and with no spaces (e.g., fever,dry_cough):'),
+    display_symptom_options,
+    read_line_to_string(user_input, SymptomsInput),
+    process_symptoms(PatientName, Age, Gender, SymptomsInput).
+
+% Display the list of symptom options to the user
+display_symptom_options :-
+    writeln('- fever'),
+    writeln('- dry_cough'),
+    writeln('- tiredness'),
+    writeln('- aches_and_pains'),
+    writeln('- sore_throat'),
+    writeln('- diarrhea'),
+    writeln('- conjunctivitis'),
+    writeln('- headache'),
+    writeln('- anosmia'),
+    writeln('- shortness_of_breath'),
+    writeln('- chest_pain'),
+    writeln('- loss_of_speech_or_movement'),
+    writeln('- asymptomatic').
+
+% Define a predicate to process the input for symptoms
+process_symptoms(PatientName, Age, Gender, SymptomsInput) :-
+    atom_string(SymptomsAtom, SymptomsInput),
+    atomic_list_concat(SymptomsList, ',', SymptomsAtom),
+    assert_symptoms(PatientName, SymptomsList),
+    ask_risk_factors(PatientName, Age, Gender).
+
+% Define a predicate to assert symptoms for the patient
+assert_symptoms(_, []) :- !.
+assert_symptoms(PatientName, [Symptom | Rest]) :-
+    assert(has_symptoms(PatientName, Symptom)),% Stores the patient symptoms to later calculate
+    assert_symptoms(PatientName, Rest).
+
+% Define a predicate to ask for risk factors and process the input
+ask_risk_factors(PatientName, Age, Gender) :-
+    writeln('What are the patient\'s risk factors:'),
+    writeln('Select all that apply, separated by commas, and with no spaces (e.g., age_above_70,hypertension):'),
+    display_risk_factors,
+    read_line_to_string(user_input, RiskFactorsInput),
+    process_risk_factors_input(PatientName, Age, Gender, RiskFactorsInput).
+
+% Display the list of risk factor options to the user
+display_risk_factors :-
+    writeln('1. age_above_70'),
+    writeln('2. hypertension'),
+    writeln('3. diabetes'),
+    writeln('4. cardiovascular disease'),
+    writeln('5. chronic respiratory disease'),
+    writeln('6. cancer'),
+    writeln('7. male').
+
+% Define a predicate to process the input of patient risk factors
+process_risk_factors_input(PatientName, Age, Gender, RiskFactorsInput) :-
+    atom_string(RiskFactorsAtom, RiskFactorsInput),
+    atomic_list_concat(RiskFactorsList, ',', RiskFactorsAtom),
+    assert_risk_factors(PatientName, RiskFactorsList),
+    calculate_points(PatientName, Age, Gender).
+
+% Define a predicate to assert risk factors for the patient
+assert_risk_factors(_, []).
+assert_risk_factors(PatientName, [RiskFactor | Rest]) :-
+    assert(has_risk_factors(PatientName, RiskFactor)), % Stores patient risk factors to later calculate
+    assert_risk_factors(PatientName, Rest).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Point System %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define rules for assigning points to symptoms
+symptom_points(fever, mild, 1).
+symptom_points(dry_cough, mild, 1).
+symptom_points(tiredness, mild, 1).
+symptom_points(aches_and_pains, mild, 1).
+symptom_points(sore_throat, mild, 1).
+symptom_points(diarrhea, mild, 1).
+symptom_points(conjunctivitis, mild, 1).
+symptom_points(headache, moderate, 2).
+symptom_points(anosmia, moderate, 2).
+symptom_points(shortness_of_breath, severe, 3).
+symptom_points(chest_pain, severe, 3).
+symptom_points(loss_of_speech_or_movement, severe, 3).
+symptom_points(asymptomatic, none, 0).
+
+% Define rules for assigning points to risk factors
+risk_factor_points(age_above_70, 2).
+risk_factor_points(hypertension, 1).
+risk_factor_points(diabetes, 1).
+risk_factor_points(cardiovascular_disease, 2).
+risk_factor_points(chronic_respiratory_disease, 1).
+risk_factor_points(cancer, 1).
+risk_factor_points(male, 1).
+
+% Define rules for assigning points to close contact
+close_contact_points(yes, 0.5).
+close_contact_points(no, 0).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Diagnosis Calculation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Calculate total points for symptoms
+calculate_symptom_points(PatientName, SymptomPoints) :-
+    findall(Points, (has_symptoms(PatientName, Symptom), symptom_points(Symptom, _, Points)), SymptomPointsList),
+    sum_list(SymptomPointsList, SymptomPoints).
+
+% Calculate total points for risk factors
+calculate_risk_factor_points(PatientName, RiskFactorPoints) :-
+    has_risk_factors(PatientName, RiskFactors),
+    findall(Points, (member(RiskFactor, RiskFactors), risk_factor_points(RiskFactor, Points)), RiskFactorPointsList),
+    sum_list(RiskFactorPointsList, RiskFactorPoints).
+
+% Calculate total points for close contact history
+calculate_close_contact_points(ContactHistory, CloseContactPoints) :-
+    close_contact_points(ContactHistory, CloseContactPoints).
+
+# % Calculate total points for symptoms, risk factors, and close contact
+# calculate_points(PatientName, Age, Gender) :-
+#     calculate_symptom_points(PatientName, SymptomPoints),
+#     calculate_risk_factor_points(PatientName, RiskFactorPoints),
+#     calculate_close_contact_points(ContactHistory, CloseContactPoints),
+#     TotalPoints is SymptomPoints + RiskFactorPoints + CloseContactPoints,
+#     recommend_diagnosis(TotalPoints).
+
+% Calculate total points for symptoms, risk factors, and close contact
+calculate_points(PatientName, Age, Gender, ContactHistory) :-
+    calculate_symptom_points(PatientName, SymptomPoints),
+    calculate_risk_factor_points(PatientName, RiskFactorPoints),
+    calculate_close_contact_points(ContactHistory, CloseContactPoints),
+    TotalPoints is SymptomPoints + RiskFactorPoints + CloseContactPoints,
+    recommend_diagnosis(TotalPoints).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Diagnosis Classification %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define a predicate to recommend diagnosis and actions based on total points
+recommend_diagnosis(TotalPoints) :-
+    (TotalPoints >= 3 ->
+        writeln('Diagnosis: Severe'),
+        writeln('Recommendation: Seek immediate medical attention! Contact your doctor or health facility.'),
+        writeln('Action: Proceed with an initial assessment call to the doctor or health facility.')
+
+    ; TotalPoints = 2 ->
+        writeln('Diagnosis: Moderate'),
+        writeln('Recommendation: Monitor your symptoms closely at home.'),
+        writeln('Action: If symptoms worsen, contact your healthcare provider.')
+
+    ; TotalPoints = 1 ->
+        writeln('Diagnosis: Mild'),
+        writeln('Recommendation: Manage your symptoms at home.'),
+        writeln('Action: Get plenty of rest, stay hydrated, and monitor your condition.')
+
+    # ; TotalPoints = 0 ->
+    #     ContactHistory = 'yes' ->
+    #     writeln('Diagnosis: Low Risk'),
+    #     writeln('Recommendation: You have had close contact with an infected person, but no symptoms or risk factors.'),
+    #     writeln('Action: Quarantine yourself and monitor for symptoms.')
+
+    ; TotalPoints = 0 ->
+        writeln('Diagnosis: None'),
+        writeln('Recommendation: You are asymptomatic.'),
+        writeln('Action: Continue to practice good hygiene and social distancing to prevent the spread of the virus.')
+
+    ),
+    !.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Starting the Program %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% You can start the program by typing 'start_diagnosis.' in SWI Prolog terminal after consulting the file.
+% I found issues running the program through mac if the 'start_diagnosis' was left uncommented.
+% :- start_diagnosis.
