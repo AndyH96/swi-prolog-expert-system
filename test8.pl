@@ -228,5 +228,6 @@ recommend_diagnosis(TotalPoints) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Starting the Program %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% You can start the program by typing 'start_diagnosis.' in SWI Prolog terminal.
+% You can start the program by typing 'start_diagnosis.' in SWI Prolog terminal after consulting the file.
+% I found issues running the program through mac if the 'start_diagnosis' was left uncommented.
 % :- start_diagnosis.
