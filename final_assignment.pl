@@ -177,14 +177,6 @@ calculate_risk_factor_points(PatientName, RiskFactorPoints) :-
 calculate_close_contact_points(ContactHistory, CloseContactPoints) :-
     close_contact_points(ContactHistory, CloseContactPoints).
 
-# % Calculate total points for symptoms, risk factors, and close contact
-# calculate_points(PatientName, Age, Gender) :-
-#     calculate_symptom_points(PatientName, SymptomPoints),
-#     calculate_risk_factor_points(PatientName, RiskFactorPoints),
-#     calculate_close_contact_points(ContactHistory, CloseContactPoints),
-#     TotalPoints is SymptomPoints + RiskFactorPoints + CloseContactPoints,
-#     recommend_diagnosis(TotalPoints).
-
 % Calculate total points for symptoms, risk factors, and close contact
 calculate_points(PatientName, Age, Gender, ContactHistory) :-
     calculate_symptom_points(PatientName, SymptomPoints),
@@ -211,12 +203,6 @@ recommend_diagnosis(TotalPoints) :-
         writeln('Diagnosis: Mild'),
         writeln('Recommendation: Manage your symptoms at home.'),
         writeln('Action: Get plenty of rest, stay hydrated, and monitor your condition.')
-
-    # ; TotalPoints = 0 ->
-    #     ContactHistory = 'yes' ->
-    #     writeln('Diagnosis: Low Risk'),
-    #     writeln('Recommendation: You have had close contact with an infected person, but no symptoms or risk factors.'),
-    #     writeln('Action: Quarantine yourself and monitor for symptoms.')
 
     ; TotalPoints = 0 ->
         writeln('Diagnosis: None'),
