@@ -1,4 +1,4 @@
-# CSCK502 Module
+# SWI-Prolog Expert System
 
 Prolog is a programming language for artificial intelligence and language processing. Prolog's rule structure and inference strategy is adequate for many AI applications and the creation of intelligent systems. Prolog rules are used for knowledge representation, while Prolog's own built-in backward chaining inference engine is used to derive conclusions. Each rule has a goal and several sub-goals.
 
